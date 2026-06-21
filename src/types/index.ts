@@ -4,6 +4,8 @@ export interface Service {
   description?: string
   duration_minutes: number
   price?: number
+  service_type: 'main' | 'extra'
+  sort_order: number
 }
 
 export interface AvailableSlot {

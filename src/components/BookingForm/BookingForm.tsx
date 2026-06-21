@@ -1,0 +1,243 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../../lib/supabase'
+import { Select } from '../Select/Select'
+import type { AvailableSlot, Service } from '../../types'
+
+interface Props {
+  slot: AvailableSlot
+  services: Service[]
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function formatTime(time: string) {
+  return time.slice(0, 5)
+}
+
+function formatDate(date: string) {
+  return new Date(date + 'T00:00:00').toLocaleDateString('ro-RO', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  })
+}
+
+export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
+  const mainServices = services.filter((s) => s.service_type === 'main')
+
+  const [name, setName] = useState('')
+  const [nameError, setNameError] = useState(false)
+  const [phoneDialCode, setPhoneDialCode] = useState('+40')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneError, setPhoneError] = useState(false)
+  const [serviceError, setServiceError] = useState(false)
+  const [instagram, setInstagram] = useState('')
+  const [serviceId, setServiceId] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    let hasError = false
+
+    if (name.trim().length < 5) {
+      setNameError(true)
+      hasError = true
+    } else {
+      setNameError(false)
+    }
+
+    const dialClean = phoneDialCode.trim()
+    const digits = phoneNumber.replace(/\D/g, '')
+    if (!dialClean.startsWith('+') || dialClean.length < 2 || digits.length < 6) {
+      setPhoneError(true)
+      hasError = true
+    } else {
+      setPhoneError(false)
+    }
+
+    if (mainServices.length > 0 && !serviceId) {
+      setServiceError(true)
+      hasError = true
+    } else {
+      setServiceError(false)
+    }
+
+    if (hasError) return
+    setSubmitting(true)
+    setError(null)
+
+    const fullPhone = dialClean + digits
+
+    const { error: rpcError } = await supabase.rpc('book_slot', {
+      p_slot_id: slot.id,
+      p_client_name: name.trim(),
+      p_client_phone: fullPhone,
+      p_service_id: serviceId || null,
+    })
+
+    if (rpcError) {
+      setError(
+        rpcError.message.includes('no longer available')
+          ? 'Acest interval tocmai a fost rezervat de altcineva. Te rugăm să alegi altul.'
+          : 'A apărut o eroare. Te rugăm să încerci din nou.'
+      )
+      setSubmitting(false)
+      return
+    }
+
+    // Save instagram separately if provided (appointments row already created)
+    if (instagram.trim()) {
+      // fetch the latest appointment for this slot and update instagram
+      await supabase
+        .from('appointments')
+        .update({ client_instagram: instagram.trim() })
+        .eq('slot_id', slot.id)
+        .eq('client_name', name.trim())
+    }
+
+    onSuccess()
+  }
+
+  const [visible, setVisible] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 10); return () => clearTimeout(t) }, [])
+
+  const inputCls = "bg-white/50 backdrop-blur-sm border rounded-2xl px-4 py-3 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] w-full"
+  const inputBorder = (hasErr: boolean) => hasErr ? 'border-red-400 focus:border-red-400' : 'border-white/60 focus:border-[#34c759]'
+  const labelCls = "flex flex-col gap-1.5 text-xs font-semibold text-[#6e6e73] uppercase tracking-wide"
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+      onClick={onCancel}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto"
+        style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.3s ease' }}
+      />
+      <div
+        className="relative glass-heavy rounded-3xl p-7 w-full max-w-md mx-4 overflow-y-auto max-h-[90vh] pointer-events-auto"
+        style={{
+          transform: visible ? 'translateY(0)' : 'translateY(-60px)',
+          opacity: visible ? 1 : 0,
+          transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="absolute top-5 right-5 w-7 h-7 rounded-full bg-[#1d1d1f]/10 flex items-center justify-center text-[#6e6e73] hover:bg-[#1d1d1f]/15 transition-colors cursor-pointer border-none"
+          onClick={onCancel}
+          aria-label="Închide"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="1" y1="1" x2="11" y2="11" />
+            <line x1="11" y1="1" x2="1" y2="11" />
+          </svg>
+        </button>
+
+        <h2 className="text-lg font-semibold text-[#1d1d1f] tracking-tight mb-1">Confirmă rezervarea</h2>
+        <p className="text-sm text-[#6e6e73] mb-6 leading-relaxed">
+          {formatDate(slot.date)} · <strong className="text-[#1d1d1f] font-medium">{formatTime(slot.start_time)}</strong>
+        </p>
+
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-2">
+          <label className={labelCls}>
+            <span className="flex items-center gap-1 pl-2">Nume complet <span className="text-red-500 normal-case tracking-normal font-normal">*</span></span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setNameError(false) }}
+              autoComplete="name"
+              placeholder="e.g. Maria Popescu"
+              className={`${inputCls} ${inputBorder(nameError)}`}
+            />
+            <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${nameError ? 'visible' : 'invisible'}`}>Introdu numele complet (minim 5 caractere).</span>
+          </label>
+
+          <label className={labelCls}>
+            <span className="flex items-center gap-1 pl-2">Telefon <span className="text-red-500 normal-case tracking-normal font-normal">*</span></span>
+            <div className={`flex items-center bg-white/50 backdrop-blur-sm border rounded-2xl overflow-hidden focus-within:bg-white/85 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] ${phoneError ? 'border-red-400' : 'border-white/60 focus-within:border-[#34c759]'}`}>
+              <input
+                type="text"
+                value={phoneDialCode}
+                onChange={(e) => { setPhoneDialCode(e.target.value); setPhoneError(false) }}
+                className="w-16 px-3 py-3 text-sm font-medium text-[#1d1d1f] bg-white/30 border-r border-white/60 outline-none text-center shrink-0"
+                placeholder="+40"
+                autoComplete="off"
+              />
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '')
+                  const formatted = digits.replace(/(\d{3})(?=\d)/g, '$1 ')
+                  setPhoneNumber(formatted)
+                  setPhoneError(false)
+                }}
+                placeholder="7XX XXX XXX"
+                autoComplete="tel"
+                className="flex-1 px-3 py-3 text-sm font-normal text-[#1d1d1f] bg-transparent outline-none"
+              />
+            </div>
+            <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${phoneError ? 'visible' : 'invisible'}`}>Număr de telefon invalid.</span>
+          </label>
+
+          <label className={labelCls}>
+            <span className="pl-2">Instagram</span>
+            <div className="flex items-center bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl overflow-hidden focus-within:bg-white/85 focus-within:border-[#34c759] transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)]">
+              <span className="px-3 py-3 text-sm text-[#6e6e73] border-r border-white/60 bg-white/30">@</span>
+              <input
+                type="text"
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
+                placeholder="username"
+                autoComplete="off"
+                className="flex-1 px-3 py-3 text-sm font-normal text-[#1d1d1f] bg-transparent outline-none"
+              />
+            </div>
+          </label>
+
+          {mainServices.length > 0 && (
+            <label className={labelCls}>
+              <span className="flex items-center gap-1 pl-2 pt-5">Serviciu <span className="text-red-500 normal-case tracking-normal font-normal">*</span></span>
+              <Select
+                value={serviceId}
+                onChange={(v) => { setServiceId(v); setServiceError(false) }}
+                error={serviceError}
+                placeholder="— Selectează un serviciu —"
+                options={mainServices.map((s) => ({
+                  value: s.id,
+                  label: s.name + (s.price ? ` — ${s.price} RON` : ''),
+                }))}
+                className="w-full"
+              />
+              <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${serviceError ? 'visible' : 'invisible'}`}>Te rugăm să selectezi un serviciu.</span>
+            </label>
+          )}
+
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50/80 border border-red-200/50 rounded-2xl px-4 py-3 m-0">{error}</p>
+          )}
+
+          <div className="flex gap-3 justify-end mt-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={submitting}
+              className="px-5 py-2.5 rounded-full text-sm font-medium text-[#6e6e73] glass cursor-pointer hover:scale-105 active:scale-95 transition-all disabled:opacity-50 border-none"
+            >
+              Anulează
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="bg-[#34c759] hover:bg-[#28a745] text-white border-none rounded-full px-6 py-2.5 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-[0_4px_16px_rgba(52,199,89,0.35)]"
+            >
+              {submitting ? 'Se procesează...' : 'Rezervă'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
