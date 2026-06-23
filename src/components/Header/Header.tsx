@@ -3,8 +3,9 @@ import { useState } from 'react'
 const NAV_LINKS = [
   { label: 'Programări', href: '/' },
   { label: 'Price List', href: '/prices' },
-  { label: 'Despre', href: '#despre' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Programarea mea', href: '/programarea-mea' },
+  { label: 'Despre', href: '/despre' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export function Header() {
@@ -12,7 +13,7 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 flex justify-center px-4 pt-4">
-      <nav className="glass rounded-2xl px-4 py-2.5 w-full max-w-2xl flex items-center justify-between">
+      <nav className="glass rounded-2xl px-4 py-2.5 w-full max-w-4xl flex items-center justify-between">
 
         <a href="/" className="flex items-center gap-2.5 no-underline">
           {/* <img src="/../public/logo.png" alt="Nail Bar logo" className="w-8 h-8 rounded-xl object-cover" /> */}

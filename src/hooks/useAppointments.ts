@@ -25,6 +25,11 @@ export function useAppointments() {
 
   useEffect(() => { load() }, [])
 
+  async function confirmAppointment(id: string) {
+    await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', id)
+    await load()
+  }
+
   async function cancelAppointment(id: string, slotId: string) {
     // Mark appointment cancelled and free the slot
     await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
@@ -32,5 +37,5 @@ export function useAppointments() {
     await load()
   }
 
-  return { appointments, loading, error, cancelAppointment }
+  return { appointments, loading, error, confirmAppointment, cancelAppointment }
 }

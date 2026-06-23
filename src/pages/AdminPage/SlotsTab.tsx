@@ -1,31 +1,36 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { MonthCalendar } from '../../components/MonthCalendar/MonthCalendar'
+import { useAdminSlots } from '../../hooks/useAdminSlots'
+import { ConfirmModal } from '../../components/ui/ConfirmModal'
 
-// Returns all dates between from and to (inclusive) that match selected days of week
+function localDateStr(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 function getDatesInRange(from: string, to: string, daysOfWeek: number[]): string[] {
   const dates: string[] = []
   const current = new Date(from + 'T00:00:00')
   const end = new Date(to + 'T00:00:00')
-
   while (current <= end) {
-    // getDay(): 0=Sun, 1=Mon ... 6=Sat — we store Mon=1..Sun=7
     const dow = current.getDay() === 0 ? 7 : current.getDay()
     if (daysOfWeek.length === 0 || daysOfWeek.includes(dow)) {
-      dates.push(current.toISOString().slice(0, 10))
+      dates.push(localDateStr(current))
     }
     current.setDate(current.getDate() + 1)
   }
   return dates
 }
 
-// Generates slots of duration_minutes between startTime and endTime
 function generateTimeSlots(startTime: string, endTime: string, durationMinutes: number) {
   const slots: { start_time: string; end_time: string }[] = []
   const [sh, sm] = startTime.split(':').map(Number)
   const [eh, em] = endTime.split(':').map(Number)
   let current = sh * 60 + sm
   const end = eh * 60 + em
-
   while (current + durationMinutes <= end) {
     const s = `${String(Math.floor(current / 60)).padStart(2, '0')}:${String(current % 60).padStart(2, '0')}`
     const e = `${String(Math.floor((current + durationMinutes) / 60)).padStart(2, '0')}:${String((current + durationMinutes) % 60).padStart(2, '0')}`
@@ -35,230 +40,183 @@ function generateTimeSlots(startTime: string, endTime: string, durationMinutes: 
   return slots
 }
 
-const DAY_LABELS = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum']
+function overlaps(s1: string, e1: string, s2: string, e2: string): boolean {
+  return s1 < e2 && s2 < e1
+}
+
+const DAY_LABELS = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sam', 'Dum']
 const DAY_VALUES = [1, 2, 3, 4, 5, 6, 7]
 
 export function SlotsTab() {
   const [tab, setTab] = useState<'single' | 'bulk'>('single')
-
-  // Single slot state
   const [sDate, setSDate] = useState('')
   const [sStart, setSStart] = useState('10:00')
   const [sEnd, setSEnd] = useState('12:00')
-
-  // Bulk state
   const [bFrom, setBFrom] = useState('')
   const [bTo, setBTo] = useState('')
   const [bStart, setBStart] = useState('10:00')
   const [bEnd, setBEnd] = useState('18:00')
   const [bDuration, setBDuration] = useState(120)
-  const [bDays, setBDays] = useState<number[]>([1, 2, 3, 4, 5]) // Mon-Fri
-
+  const [bDays, setBDays] = useState<number[]>([1, 2, 3, 4, 5])
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const today = new Date()
+  const [adminYear, setAdminYear] = useState(today.getFullYear())
+  const [adminMonth, setAdminMonth] = useState(today.getMonth() + 1)
+  const [adminSelectedDate, setAdminSelectedDate] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState<{ id: string; label: string } | null>(null)
+  const { slots: adminSlots, datesWithSlots: adminDates, loading: adminLoading, deleteSlot, refresh: adminRefresh } = useAdminSlots(adminYear, adminMonth)
 
-  const inputCls = "bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl px-4 py-2.5 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 focus:border-[#34c759] transition-all w-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)]"
-  const labelCls = "flex flex-col gap-1.5 text-xs font-semibold text-[#6e6e73] uppercase tracking-wide"
+  const inputCls = "bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl px-4 py-2.5 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 focus:border-[#34c759] transition-all w-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] cursor-pointer"
+  const labelCls = "flex flex-col gap-1.5 text-xs font-semibold text-[#6e6e73] uppercase tracking-wide cursor-pointer"
+  const openPicker = (e: React.MouseEvent<HTMLLabelElement>) => {
+    const input = e.currentTarget.querySelector('input') as HTMLInputElement | null
+    input?.showPicker?.()
+  }
   const submitBtnCls = "bg-[#34c759] hover:bg-[#28a745] text-white border-none rounded-full py-3 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-[0_4px_16px_rgba(52,199,89,0.3)]"
   const msgCls = (type: 'success' | 'error') => `text-sm rounded-2xl px-4 py-3 m-0 ${type === 'success' ? 'bg-[#34c759]/15 text-[#1a6b2e]' : 'bg-red-50/80 text-red-600'}`
 
   function toggleDay(day: number) {
-    setBDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    )
+    setBDays((prev) => prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day])
   }
 
   async function handleSingleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (sStart >= sEnd) {
-      setMessage({ type: 'error', text: 'End time must be after start time.' })
-      return
+    if (sStart >= sEnd) { setMessage({ type: 'error', text: 'Ora de sfarsit trebuie sa fie dupa ora de start.' }); return }
+    setSaving(true); setMessage(null)
+    const { data: existing } = await supabase.from('available_slots').select('start_time, end_time').eq('date', sDate)
+    if (existing?.some(s => overlaps(sStart, sEnd, s.start_time, s.end_time))) {
+      setMessage({ type: 'error', text: 'Exista deja un slot care se suprapune cu acest interval.' })
+      setSaving(false); return
     }
-    setSaving(true)
-    setMessage(null)
-
-    const { error } = await supabase
-      .from('available_slots')
-      .insert({ date: sDate, start_time: sStart, end_time: sEnd })
-
-    setMessage(error
-      ? { type: 'error', text: error.message }
-      : { type: 'success', text: 'Slot adăugat cu succes.' }
-    )
-    setSaving(false)
+    const { error } = await supabase.from('available_slots').insert({ date: sDate, start_time: sStart, end_time: sEnd })
+    setMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Slot adaugat cu succes.' })
+    adminRefresh(); setSaving(false)
   }
 
   async function handleBulkSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (bFrom > bTo) {
-      setMessage({ type: 'error', text: 'Data de sfârșit trebuie să fie după data de start.' })
-      return
-    }
-    if (bStart >= bEnd) {
-      setMessage({ type: 'error', text: 'Ora de sfârșit trebuie să fie după ora de start.' })
-      return
-    }
-
-    setSaving(true)
-    setMessage(null)
-
+    if (bFrom > bTo) { setMessage({ type: 'error', text: 'Data de sfarsit trebuie sa fie dupa data de start.' }); return }
+    if (bStart >= bEnd) { setMessage({ type: 'error', text: 'Ora de sfarsit trebuie sa fie dupa ora de start.' }); return }
+    setSaving(true); setMessage(null)
     const dates = getDatesInRange(bFrom, bTo, bDays)
     const timeSlots = generateTimeSlots(bStart, bEnd, bDuration)
-
-    if (dates.length === 0 || timeSlots.length === 0) {
-      setMessage({ type: 'error', text: 'Nu s-au generat sloturi. Verifică setările.' })
-      setSaving(false)
-      return
-    }
-
-    const rows = dates.flatMap((date) =>
-      timeSlots.map(({ start_time, end_time }) => ({ date, start_time, end_time }))
-    )
-
-    const { error } = await supabase.from('available_slots').insert(rows)
-
-    setMessage(error
-      ? { type: 'error', text: error.message }
-      : { type: 'success', text: `${rows.length} slot(uri) adăugate în ${dates.length} zi(le).` }
-    )
-    setSaving(false)
+    if (dates.length === 0 || timeSlots.length === 0) { setMessage({ type: 'error', text: 'Nu s-au generat sloturi. Verifica setarile.' }); setSaving(false); return }
+    const { data: existing } = await supabase.from('available_slots').select('date, start_time, end_time').gte('date', bFrom).lte('date', bTo)
+    const allRows = dates.flatMap((date) => timeSlots.map(({ start_time, end_time }) => ({ date, start_time, end_time })))
+    const newRows = allRows.filter(row => !existing?.some(s => s.date === row.date && overlaps(row.start_time, row.end_time, s.start_time, s.end_time)))
+    if (newRows.length === 0) { setMessage({ type: 'error', text: 'Toate sloturile exista deja sau se suprapun.' }); setSaving(false); return }
+    const { error } = await supabase.from('available_slots').insert(newRows)
+    const skipped = allRows.length - newRows.length
+    setMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: `${newRows.length} slot(uri) adaugate in ${dates.length} zi(le).${skipped > 0 ? ` (${skipped} sarite, existau deja)` : ''}` })
+    adminRefresh(); setSaving(false)
   }
 
+  const slotsForAdminDate = adminSelectedDate ? adminSlots.filter(s => s.date === adminSelectedDate).sort((a, b) => a.start_time.localeCompare(b.start_time)) : []
+
   return (
-    <div className="glass rounded-3xl p-6 max-w-lg">
-      {/* Sliding pill tab selector */}
-      <div className="relative flex bg-white/30 rounded-xl p-1 mb-5">
-        <div
-          className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-white/80 shadow-sm pointer-events-none"
-          style={{
-            transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: tab === 'bulk' ? 'translateX(calc(100% + 8px))' : 'translateX(0)',
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => { setTab('single'); setMessage(null) }}
-          className={`relative z-10 flex-1 rounded-lg py-2 text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'single' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}
-        >
-          Slot individual
-        </button>
-        <button
-          type="button"
-          onClick={() => { setTab('bulk'); setMessage(null) }}
-          className={`relative z-10 flex-1 rounded-lg py-2 text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'bulk' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}
-        >
-          Generare în masă
-        </button>
+    <div className="flex flex-col xl:flex-row gap-6 items-start">
+      <div className="glass rounded-3xl p-6 w-full xl:w-[500px] xl:shrink-0">
+        <div className="relative flex bg-white/30 rounded-xl p-1 mb-5">
+          <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-white/80 shadow-sm pointer-events-none" style={{ transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)', transform: tab === 'bulk' ? 'translateX(calc(100% + 8px))' : 'translateX(0)' }} />
+          <button type="button" onClick={() => { setTab('single'); setMessage(null) }} className={`relative z-10 flex-1 rounded-lg py-2 text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'single' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>Slot individual</button>
+          <button type="button" onClick={() => { setTab('bulk'); setMessage(null) }} className={`relative z-10 flex-1 rounded-lg py-2 text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'bulk' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>Generare in masa</button>
+        </div>
+        {tab === 'single' && (
+          <form className="flex flex-col gap-4" onSubmit={handleSingleSubmit}>
+            <label className={labelCls} onClick={openPicker}>Data<input type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelCls} onClick={openPicker}>Ora start<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={inputCls} /></label>
+              <label className={labelCls} onClick={openPicker}>Ora sfarsit<input type="time" value={sEnd} onChange={(e) => setSEnd(e.target.value)} required className={inputCls} /></label>
+            </div>
+            {message && <p className={msgCls(message.type)}>{message.text}</p>}
+            <button type="submit" disabled={saving || !sDate || !sStart || !sEnd} className={submitBtnCls}>{saving ? 'Se salveaza...' : 'Adauga slot'}</button>
+          </form>
+        )}
+        {tab === 'bulk' && (
+          <form className="flex flex-col gap-4" onSubmit={handleBulkSubmit}>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelCls} onClick={openPicker}>De la data<input type="date" value={bFrom} onChange={(e) => setBFrom(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
+              <label className={labelCls} onClick={openPicker}>Pana la data<input type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelCls} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={inputCls} /></label>
+              <label className={labelCls} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={inputCls} /></label>
+            </div>
+            <label className={labelCls}>Durata slotului
+              {(() => {
+                const opts = [{ value: 30, label: '30 min' }, { value: 60, label: '1h' }, { value: 90, label: '1.5h' }, { value: 120, label: '2h' }]
+                const idx = opts.findIndex((o) => o.value === bDuration)
+                return (
+                  <div className="relative flex bg-white/30 rounded-xl p-1 mt-0.5">
+                    <div className="absolute top-1 bottom-1 rounded-lg bg-white/80 shadow-sm pointer-events-none" style={{ width: `calc((100% - 8px) / ${opts.length})`, transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(calc(${idx} * 100% + ${idx} * 2px))` }} />
+                    {opts.map((o) => (<button key={o.value} type="button" onClick={() => setBDuration(o.value)} className={`relative z-10 flex-1 rounded-lg py-2 text-xs font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${bDuration === o.value ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>{o.label}</button>))}
+                  </div>
+                )
+              })()}
+            </label>
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Zile din saptamana</span>
+              <div className="flex flex-wrap gap-2">
+                {DAY_VALUES.map((day, i) => (
+                  <button key={day} type="button" onClick={() => toggleDay(day)} className={`rounded-full px-3 py-1.5 text-xs font-semibold cursor-pointer transition-all border ${bDays.includes(day) ? 'bg-[#34c759]/15 border-[#34c759]/40 text-[#1a6b2e] scale-105' : 'bg-white/40 border-white/60 text-[#6e6e73] hover:bg-white/60'}`}>{DAY_LABELS[i]}</button>
+                ))}
+              </div>
+            </div>
+            {message && <p className={msgCls(message.type)}>{message.text}</p>}
+            <button type="submit" disabled={saving || !bFrom || !bTo || !bStart || !bEnd || bDays.length === 0} className={submitBtnCls}>{saving ? 'Se genereaza...' : 'Genereaza sloturi'}</button>
+          </form>
+        )}
       </div>
 
-      {tab === 'single' && (
-        <form className="flex flex-col gap-4" onSubmit={handleSingleSubmit}>
-          <label className={labelCls}>
-            Dată
-            <input type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required className={inputCls} />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className={labelCls}>
-              Oră start
-              <input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={inputCls} />
-            </label>
-            <label className={labelCls}>
-              Oră sfârșit
-              <input type="time" value={sEnd} onChange={(e) => setSEnd(e.target.value)} required className={inputCls} />
-            </label>
+      <div className="w-full xl:w-[400px] xl:shrink-0 flex flex-col gap-4">
+        <div className="glass rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-[#1d1d1f]">Sloturi existente</h3>
+            {adminLoading && <span className="text-xs text-[#6e6e73]">Se incarca...</span>}
           </div>
-          {message && <p className={msgCls(message.type)}>{message.text}</p>}
-          <button type="submit" disabled={saving} className={submitBtnCls}>
-            {saving ? 'Se salvează...' : 'Adaugă slot'}
-          </button>
-        </form>
-      )}
-
-      {tab === 'bulk' && (
-        <form className="flex flex-col gap-4" onSubmit={handleBulkSubmit}>
-          <div className="grid grid-cols-2 gap-3">
-            <label className={labelCls}>
-              De la data
-              <input type="date" value={bFrom} onChange={(e) => setBFrom(e.target.value)} required className={inputCls} />
-            </label>
-            <label className={labelCls}>
-              Până la data
-              <input type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required className={inputCls} />
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className={labelCls}>
-              Oră start
-              <input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={inputCls} />
-            </label>
-            <label className={labelCls}>
-              Oră sfârșit
-              <input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={inputCls} />
-            </label>
-          </div>
-
-          <label className={labelCls}>
-            Durata slotului
-            {(() => {
-              const opts = [
-                { value: 30, label: '30 min' },
-                { value: 60, label: '1h' },
-                { value: 90, label: '1.5h' },
-                { value: 120, label: '2h' },
-                { value: 180, label: '3h' },
-              ]
-              const idx = opts.findIndex((o) => o.value === bDuration)
-              return (
-                <div className="relative flex bg-white/30 rounded-xl p-1 mt-0.5">
-                  <div
-                    className="absolute top-1 bottom-1 rounded-lg bg-white/80 shadow-sm pointer-events-none"
-                    style={{
-                      width: `calc((100% - 8px) / ${opts.length})`,
-                      transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                      transform: `translateX(calc(${idx} * 100% + ${idx} * 2px))`,
-                    }}
-                  />
-                  {opts.map((o) => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => setBDuration(o.value)}
-                      className={`relative z-10 flex-1 rounded-lg py-2 text-xs font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${bDuration === o.value ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              )
-            })()}
-          </label>
-
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Zile din săptămână</span>
-            <div className="flex flex-wrap gap-2">
-              {DAY_VALUES.map((day, i) => (
-                <button
-                  key={day}
-                  type="button"
-                  onClick={() => toggleDay(day)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold cursor-pointer transition-all border ${
-                    bDays.includes(day)
-                      ? 'bg-[#34c759]/15 border-[#34c759]/40 text-[#1a6b2e] scale-105'
-                      : 'bg-white/40 border-white/60 text-[#6e6e73] hover:bg-white/60'
-                  }`}
-                >
-                  {DAY_LABELS[i]}
-                </button>
-              ))}
+          <MonthCalendar year={adminYear} month={adminMonth} datesWithSlots={adminDates} selectedDate={adminSelectedDate} onDaySelect={setAdminSelectedDate}
+            onPrev={() => { if (adminMonth === 1) { setAdminYear(y => y - 1); setAdminMonth(12) } else setAdminMonth(m => m - 1); setAdminSelectedDate(null) }}
+            onNext={() => { if (adminMonth === 12) { setAdminYear(y => y + 1); setAdminMonth(1) } else setAdminMonth(m => m + 1); setAdminSelectedDate(null) }}
+            allowPast />
+        </div>
+        {adminSelectedDate && (
+          <div className="glass rounded-3xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/30 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#1d1d1f]">{new Date(adminSelectedDate + 'T00:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+              <span className="text-xs text-[#6e6e73]">{slotsForAdminDate.length} slot(uri)</span>
             </div>
+            {slotsForAdminDate.length === 0 ? (
+              <p className="text-sm text-[#6e6e73] px-5 py-6 text-center">Niciun slot pentru aceasta zi.</p>
+            ) : (
+              <ul className="list-none m-0 p-0">
+                {slotsForAdminDate.map((slot, i) => (
+                  <li key={slot.id} className={`flex items-center justify-between px-5 py-3 ${i !== slotsForAdminDate.length - 1 ? 'border-b border-white/30' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-[#1d1d1f] tabular-nums">{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</span>
+                      {slot.is_booked ? <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f59e0b]/15 text-[#b45309]">Rezervat</span> : <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#1a6b2e]">Liber</span>}
+                    </div>
+                    {!slot.is_booked && (
+                      <button onClick={() => setShowDeleteModal({ id: slot.id, label: `${slot.start_time.slice(0, 5)} - ${slot.end_time.slice(0, 5)}` })} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-red-400 hover:bg-red-50/50 bg-transparent border-none cursor-pointer transition-all" aria-label="Sterge slot">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3.5h10M5.5 3.5V2.5h3v1M5 6l.5 5M9 6l-.5 5" /><rect x="3" y="3.5" width="8" height="9" rx="1.5" /></svg>
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
+        )}
+      </div>
 
-          {message && <p className={msgCls(message.type)}>{message.text}</p>}
-          <button type="submit" disabled={saving} className={submitBtnCls}>
-            {saving ? 'Se generează...' : 'Generează sloturi'}
-          </button>
-        </form>
+      {showDeleteModal && (
+        <ConfirmModal
+          title="Ștergi slotul?"
+          description={<>Slotul <strong className="text-[#1d1d1f]">{showDeleteModal.label}</strong> va fi șters definitiv.</>}
+          confirmLabel="Da, șterge"
+          onConfirm={async () => { const err = await deleteSlot(showDeleteModal.id); if (!err) setShowDeleteModal(null); else setMessage({ type: 'error', text: err }) }}
+          onDismiss={() => setShowDeleteModal(null)}
+        />
       )}
     </div>
   )

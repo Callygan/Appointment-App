@@ -12,10 +12,12 @@ interface Props {
   onDaySelect: (date: string) => void
   onPrev: () => void
   onNext: () => void
+  allowPast?: boolean
+  disablePrev?: boolean
 }
 
 export function MonthCalendar({
-  year, month, datesWithSlots, selectedDate, onDaySelect, onPrev, onNext,
+  year, month, datesWithSlots, selectedDate, onDaySelect, onPrev, onNext, allowPast, disablePrev,
 }: Props) {
   const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -35,8 +37,9 @@ export function MonthCalendar({
       <div className="flex items-center justify-between mb-5">
         <button
           onClick={onPrev}
+          disabled={!!disablePrev}
           aria-label="Luna anterioară"
-          className="w-9 h-9 rounded-full glass flex items-center justify-center cursor-pointer text-[#1d1d1f] hover:scale-105 transition-transform active:scale-95 border-none"
+          className="w-9 h-9 rounded-full glass flex items-center justify-center text-[#1d1d1f] border-none transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100 cursor-pointer hover:scale-105 active:scale-95"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="10 12 6 8 10 4" />
@@ -68,7 +71,7 @@ export function MonthCalendar({
           const hasSlots = datesWithSlots.has(dateStr)
           const isSelected = selectedDate === dateStr
           const isPast = dateStr < today
-          const isAvailable = hasSlots && !isPast
+          const isAvailable = hasSlots && (!isPast || !!allowPast)
           const dow = (firstDow + day - 1) % 7 // 0=Lu ... 5=Sâ, 6=Du
           const isWeekend = dow === 5 || dow === 6
 

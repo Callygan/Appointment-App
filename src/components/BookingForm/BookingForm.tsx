@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Select } from '../Select/Select'
+import { validateName, validatePhone, capitalizeWords, formatPhoneNumber, inputCls, labelCls, inputBorderCls } from '../../utils/validation'
 import type { AvailableSlot, Service } from '../../types'
 
 interface Props {
   slot: AvailableSlot
   services: Service[]
-  onSuccess: () => void
+  onSuccess: (bookingNumber: number) => void
   onCancel: () => void
 }
 
@@ -39,16 +40,14 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
     let hasError = false
 
-    if (name.trim().length < 5) {
+    if (validateName(name)) {
       setNameError(true)
       hasError = true
     } else {
       setNameError(false)
     }
 
-    const dialClean = phoneDialCode.trim()
-    const digits = phoneNumber.replace(/\D/g, '')
-    if (!dialClean.startsWith('+') || dialClean.length < 2 || digits.length < 6) {
+    if (validatePhone(phoneDialCode, phoneNumber)) {
       setPhoneError(true)
       hasError = true
     } else {
@@ -66,7 +65,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
     setSubmitting(true)
     setError(null)
 
-    const fullPhone = dialClean + digits
+    const fullPhone = phoneDialCode.trim() + phoneNumber.replace(/\D/g, '')
 
     const { error: rpcError } = await supabase.rpc('book_slot', {
       p_slot_id: slot.id,
@@ -85,9 +84,15 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       return
     }
 
-    // Save instagram separately if provided (appointments row already created)
+    // Fetch booking_number (and optionally update instagram)
+    const { data: apptData } = await supabase
+      .from('appointments')
+      .select('booking_number')
+      .eq('slot_id', slot.id)
+      .eq('client_name', name.trim())
+      .single()
+
     if (instagram.trim()) {
-      // fetch the latest appointment for this slot and update instagram
       await supabase
         .from('appointments')
         .update({ client_instagram: instagram.trim() })
@@ -95,15 +100,13 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
         .eq('client_name', name.trim())
     }
 
-    onSuccess()
+    onSuccess(apptData?.booking_number ?? 0)
   }
 
   const [visible, setVisible] = useState(false)
   useEffect(() => { const t = setTimeout(() => setVisible(true), 10); return () => clearTimeout(t) }, [])
 
-  const inputCls = "bg-white/50 backdrop-blur-sm border rounded-2xl px-4 py-3 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] w-full"
-  const inputBorder = (hasErr: boolean) => hasErr ? 'border-red-400 focus:border-red-400' : 'border-white/60 focus:border-[#34c759]'
-  const labelCls = "flex flex-col gap-1.5 text-xs font-semibold text-[#6e6e73] uppercase tracking-wide"
+  const inputBorder = (hasErr: boolean) => inputBorderCls(hasErr)
 
   return (
     <div
@@ -146,7 +149,10 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
             <input
               type="text"
               value={name}
-              onChange={(e) => { setName(e.target.value); setNameError(false) }}
+              onChange={(e) => {
+                  setName(capitalizeWords(e.target.value))
+                  setNameError(false)
+                }}
               autoComplete="name"
               placeholder="e.g. Maria Popescu"
               className={`${inputCls} ${inputBorder(nameError)}`}
@@ -169,9 +175,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
                 type="tel"
                 value={phoneNumber}
                 onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, '')
-                  const formatted = digits.replace(/(\d{3})(?=\d)/g, '$1 ')
-                  setPhoneNumber(formatted)
+                  setPhoneNumber(formatPhoneNumber(e.target.value))
                   setPhoneError(false)
                 }}
                 placeholder="7XX XXX XXX"

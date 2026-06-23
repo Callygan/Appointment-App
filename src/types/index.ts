@@ -19,13 +19,16 @@ export interface AvailableSlot {
 
 export interface Appointment {
   id: string
+  booking_number: number
   slot_id: string
   client_name: string
   client_phone: string
   client_instagram?: string
   service_id?: string
   created_at: string
-  status: 'confirmed' | 'cancelled'
+  status: 'pending' | 'confirmed' | 'cancelled'
+  appointment_date?: string
+  appointment_time?: string
   // joined fields
   available_slots?: AvailableSlot
   services?: Service

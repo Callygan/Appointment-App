@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useServices } from '../../hooks/useServices'
 import type { Service } from '../../types'
+import { ConfirmModal } from '../../components/ui/ConfirmModal'
 
 export function ServicesTab() {
   const { services, refresh, reorder } = useServices()
@@ -10,6 +11,7 @@ export function ServicesTab() {
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
 
   // form fields
   const [name, setName] = useState('')
@@ -74,9 +76,7 @@ export function ServicesTab() {
   }
 
   async function handleDelete(id: string, svcName: string) {
-    if (!confirm(`Ștergi serviciul "${svcName}"?`)) return
-
-    // Decouplăm mai întâi programările anulate de acest serviciu
+    // Decuplăm mai întâi programările anulate de acest serviciu
     await supabase
       .from('appointments')
       .update({ service_id: null })
@@ -88,10 +88,11 @@ export function ServicesTab() {
       const msg = error.message.includes('foreign key')
         ? `Nu poți șterge serviciul "${svcName}" atâta timp cât există o programare activă pentru acest serviciu.`
         : error.message
-      alert(msg)
+      setMessage({ type: 'error', text: msg })
     } else {
       refresh()
     }
+    setPendingDelete(null)
   }
 
   return (
@@ -211,11 +212,11 @@ export function ServicesTab() {
       </div>
 
       {/* Lista servicii */}
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="glass rounded-2xl overflow-x-auto">
         {services.length === 0 ? (
           <p className="text-sm text-[#6e6e73] px-5 py-6 text-center">Niciun serviciu adăugat.</p>
         ) : (
-          <ul className="list-none m-0 p-0">
+          <ul className="list-none m-0 p-0 min-w-[480px]">
             {services.map((s, i) => (
               <li
                 key={s.id}
@@ -278,7 +279,7 @@ export function ServicesTab() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => handleDelete(s.id, s.name)}
+                    onClick={() => setPendingDelete({ id: s.id, name: s.name })}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-red-400 hover:bg-red-50/50 bg-transparent border-none cursor-pointer transition-all"
                     aria-label="Șterge"
                   >
@@ -293,6 +294,16 @@ export function ServicesTab() {
           </ul>
         )}
       </div>
+
+      {pendingDelete && (
+        <ConfirmModal
+          title="Ștergi serviciul?"
+          description={<>Serviciul <strong className="text-[#1d1d1f]">"{pendingDelete.name}"</strong> va fi șters definitiv.</>}
+          confirmLabel="Da, șterge"
+          onConfirm={() => handleDelete(pendingDelete.id, pendingDelete.name)}
+          onDismiss={() => setPendingDelete(null)}
+        />
+      )}
     </div>
   )
 }

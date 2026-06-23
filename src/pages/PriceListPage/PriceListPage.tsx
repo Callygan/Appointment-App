@@ -15,7 +15,7 @@ export function PriceListPage() {
   const extras = services.filter((s) => s.service_type === 'extra')
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 pt-28 pb-16">
+    <div className="flex flex-col items-center px-4 pt-28 pb-16">
       <Header />
 
       <header className="text-center mb-3">

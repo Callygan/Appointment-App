@@ -14,7 +14,9 @@ export function BookingPage() {
   const [month, setMonth] = useState(today.getMonth() + 1) // 1-12
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [bookingSlot, setBookingSlot] = useState<AvailableSlot | null>(null)
+  const [bookedSlot, setBookedSlot] = useState<AvailableSlot | null>(null)
   const [booked, setBooked] = useState(false)
+  const [bookingNumber, setBookingNumber] = useState<number>(0)
 
   const { slots, loading, error, datesWithSlots, refresh } = useAvailableSlots(year, month)
   const { services } = useServices()
@@ -35,18 +37,20 @@ export function BookingPage() {
     setSelectedDate(null)
   }
 
-  function handleBookSuccess() {
+  function handleBookSuccess(num: number) {
+    setBookingNumber(num)
+    setBookedSlot(bookingSlot)
     setBookingSlot(null)
     setBooked(true)
     refresh()
   }
 
   if (booked) {
-    return <SuccessPage onBack={() => { setBooked(false); setSelectedDate(null) }} />
+    return <SuccessPage bookingNumber={bookingNumber} slot={bookedSlot} onBack={() => { setBooked(false); setSelectedDate(null) }} />
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 pt-28 pb-16">
+    <div className="flex flex-col items-center px-4 pt-28 pb-16">
       <Header />
       <header className="text-center mb-8">
         <h1 className="text-3xl font-semibold text-[#1d1d1f] tracking-tight mb-2">Fă-ți o programare</h1>
@@ -63,6 +67,7 @@ export function BookingPage() {
             onDaySelect={setSelectedDate}
             onPrev={handlePrev}
             onNext={handleNext}
+            disablePrev={year === today.getFullYear() && month === today.getMonth() + 1}
           />
         </div>
 
@@ -75,7 +80,10 @@ export function BookingPage() {
         </div>
 
         {selectedDate && (
-          <div className="glass rounded-3xl p-6">
+          <div
+            className="glass rounded-3xl p-6 overflow-hidden"
+            style={{ animation: 'slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}
+          >
             <DaySlots
               date={selectedDate}
               slots={slotsForDay}
