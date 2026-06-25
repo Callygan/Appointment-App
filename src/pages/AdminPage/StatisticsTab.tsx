@@ -4,12 +4,12 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { useStatistics } from '../../hooks/useStatistics'
+import { getDateStr } from '../../utils/dateUtils'
+import { Spinner } from '../../components/ui/Spinner'
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
-function toIso(d: Date) {
-  return d.toISOString().split('T')[0]
-}
+const toIso = getDateStr
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1)
@@ -147,6 +147,7 @@ export function StatisticsTab() {
           <span className="text-xs text-[#6e6e73]">Interval custom:</span>
           <div className="flex items-center gap-2">
             <input
+              lang="en-GB"
               type="date"
               value={customFrom}
               max={customTo || toIso(today)}
@@ -156,6 +157,7 @@ export function StatisticsTab() {
             />
             <span className="text-xs text-[#6e6e73] shrink-0">—</span>
             <input
+              lang="en-GB"
               type="date"
               value={customTo}
               min={customFrom}
@@ -176,9 +178,7 @@ export function StatisticsTab() {
       {/* Loading / Error */}
       {loading && (
         <div className="glass rounded-2xl px-6 py-10 flex items-center justify-center">
-          <svg className="animate-spin" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2" strokeLinecap="round">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-          </svg>
+          <Spinner />
         </div>
       )}
 
@@ -188,13 +188,18 @@ export function StatisticsTab() {
 
       {!loading && !error && data && (
         <>
-          {/* KPI Cards — rândul 1 */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             <KpiCard
               label="Programări"
               value={data.activeBookings}
               sub={`din ${data.totalBookings} total`}
               growth={data.momGrowth.bookings}
+            />
+            <KpiCard
+              label="Venit realizat"
+              value={`${data.realizedRevenue} RON`}
+              sub="din programări finalizate"
             />
             <KpiCard
               label="Venit estimat"
@@ -207,15 +212,6 @@ export function StatisticsTab() {
               value={data.cancelledCount}
               sub={`${data.cancellationRate}% rată anulare`}
             />
-            <KpiCard
-              label="Servicii unice"
-              value={data.byService.length}
-              sub="în perioada selectată"
-            />
-          </div>
-
-          {/* KPI Cards — rândul 2: clienți */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
             <KpiCard
               label="Clienți noi"
               value={data.newClients}

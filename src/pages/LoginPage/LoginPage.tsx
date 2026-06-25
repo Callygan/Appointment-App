@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
+import { greenBtnCls } from '../../components/ui/buttons'
 
 export function LoginPage() {
   const { signIn } = useAuth()
@@ -63,7 +64,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="bg-[#34c759] hover:bg-[#28a745] text-white border-none rounded-full py-3 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-[0_4px_16px_rgba(52,199,89,0.35)] mt-2"
+            className={`${greenBtnCls} w-full py-3 mt-2`}
           >
             {loading ? 'Se autentifică...' : 'Intră în cont'}
           </button>

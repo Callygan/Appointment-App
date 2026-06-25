@@ -1,4 +1,3 @@
-import { Header } from '../../components/Header/Header'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -16,7 +15,6 @@ export function PrivacyPage() {
 
   return (
     <div className="flex flex-col items-center px-4 pt-28 pb-16">
-      <Header />
 
       <div className="w-full max-w-2xl">
         <header className="text-center mb-10">
@@ -61,7 +59,7 @@ export function PrivacyPage() {
 
           <Section title="5. Durata stocării">
             <p>
-              Datele de programare sunt păstrate timp de maximum <strong>12 luni</strong> de la data programării,
+              Datele de programare sunt păstrate timp de maximum <strong>12 luni</strong> de la data ultimei programări,
               după care sunt șterse sau anonimizate.
             </p>
           </Section>

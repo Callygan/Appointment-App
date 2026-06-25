@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
+import { useClickOutside } from '../../hooks/useClickOutside'
 
 export interface SelectOption {
   value: string
@@ -20,15 +21,7 @@ export function Select({ value, onChange, options, placeholder = 'â€” SelecteazÄ
 
   const selected = options.find((o) => o.value === value)
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+  useClickOutside(ref, () => setOpen(false))
 
   const baseCls = `relative bg-white/50 backdrop-blur-sm border rounded-2xl text-sm font-normal text-[#1d1d1f] cursor-pointer select-none transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] ${
     open ? 'border-[#34c759] bg-white/85' : error ? 'border-red-400' : 'border-white/60'

@@ -19,25 +19,24 @@ export function Footer() {
             </a>
           </div>
 
-          {/* Instagram */}
-          <a
-            href="https://www.instagram.com/nail.bar_sibiu/"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Instagram"
-            className="text-[#6e6e73] hover:text-[#1d1d1f] transition-colors shrink-0"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-              <circle cx="12" cy="12" r="4.5" />
-              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-            </svg>
+
+          <a href="/" className="flex items-center gap-3 no-underline group select-none">
+            {/* Wordmark */}
+            <div className="flex flex-col leading-none gap-[3px]">
+              <span
+                className="text-[13px] text-center font-semibold tracking-tight transition-all duration-300"
+                style={{ color: '#1d1d1f' }}
+              >
+                nail<span className="font-black">bar</span>
+              </span>
+              <span className="text-[7px] font-medium tracking-[0.3em] uppercase text-[#b0b0b8] group-hover:text-[#a855f7] transition-colors duration-300">by Daniela Cobosnean</span>
+            </div>
           </a>
         </div>
 
         {/* Bottom: copyright */}
-        <p className="text-xs text-[#6e6e73]/50 m-0 border-t border-white/30 pt-1 text-center">
-          © {new Date().getFullYear()}<span className="text-[#6e6e73]"> Nail Bar</span>. Powered by <a href="https://www.instagram.com/dumitrupodar/" target="_blank" className="text-[#6e6e73] hover:text-[#1d1d1f] no-underline transition-colors">Dumitru Podar</a>.
+        <p className="text-xs text-[#6e6e73]/50 mt-2 border-t border-white/30 pt-1 text-center">
+          © {new Date().getFullYear()}<span className="text-[#6e6e73]"> Nail Bar</span>. Powered by <a href="https://www.instagram.com/dumitrupodar/" target="_blank" rel="noreferrer" className="text-[#6e6e73] hover:text-[#1d1d1f] no-underline transition-colors">Dumitru Podar</a>.
         </p>
       </div>
     </footer>

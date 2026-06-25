@@ -31,9 +31,13 @@ export function useAppointments() {
   }
 
   async function cancelAppointment(id: string, slotId: string) {
-    // Mark appointment cancelled and free the slot
-    await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
-    await supabase.from('available_slots').update({ is_booked: false }).eq('id', slotId)
+    const { error: apptErr } = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
+    if (apptErr) {
+      if (import.meta.env.DEV) console.error('cancelAppointment appt error:', apptErr)
+      return
+    }
+    const { error: slotErr } = await supabase.from('available_slots').update({ is_booked: false }).eq('id', slotId)
+    if (slotErr && import.meta.env.DEV) console.error('cancelAppointment slot free error:', slotErr)
     await load()
   }
 

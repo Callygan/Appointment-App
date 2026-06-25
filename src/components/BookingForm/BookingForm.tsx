@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Select } from '../Select/Select'
-import { validateName, validatePhone, capitalizeWords, formatPhoneNumber, inputCls, labelCls, inputBorderCls } from '../../utils/validation'
+import { validateName, validatePhone, capitalizeWords, formatPhoneNumber } from '../../utils/validation'
+import { inputCls, labelCls, inputBorderCls } from '../ui/formStyles'
+import { greenBtnCls } from '../ui/buttons'
+import { formatTime, formatDate } from '../../utils/dateUtils'
 import type { AvailableSlot, Service } from '../../types'
 
 interface Props {
@@ -9,16 +12,6 @@ interface Props {
   services: Service[]
   onSuccess: (bookingNumber: number) => void
   onCancel: () => void
-}
-
-function formatTime(time: string) {
-  return time.slice(0, 5)
-}
-
-function formatDate(date: string) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('ro-RO', {
-    weekday: 'long', day: 'numeric', month: 'long',
-  })
 }
 
 export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
@@ -84,23 +77,37 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       return
     }
 
-    // Fetch booking_number (and optionally update instagram)
-    const { data: apptData } = await supabase
+    // Fetch id + booking_number for subsequent updates
+    const { data: apptData, error: fetchErr } = await supabase
       .from('appointments')
-      .select('booking_number')
+      .select('id, booking_number')
       .eq('slot_id', slot.id)
       .eq('client_name', name.trim())
       .single()
+
+    if (fetchErr || !apptData) {
+      if (import.meta.env.DEV) console.error('fetch appt after book_slot failed:', fetchErr)
+      setError('Rezervarea a fost creată, dar a apărut o eroare. Contactează salonul cu numele și ora aleasă.')
+      setSubmitting(false)
+      return
+    }
+
+    const apptId = apptData.id
+
+    // Auto-confirm
+    await supabase
+      .from('appointments')
+      .update({ status: 'confirmed' })
+      .eq('id', apptId)
 
     if (instagram.trim()) {
       await supabase
         .from('appointments')
         .update({ client_instagram: instagram.trim() })
-        .eq('slot_id', slot.id)
-        .eq('client_name', name.trim())
+        .eq('id', apptId)
     }
 
-    onSuccess(apptData?.booking_number ?? 0)
+    onSuccess(apptData.booking_number)
   }
 
   const [visible, setVisible] = useState(false)
@@ -140,7 +147,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
         <h2 className="text-lg font-semibold text-[#1d1d1f] tracking-tight mb-1">Confirmă rezervarea</h2>
         <p className="text-sm text-[#6e6e73] mb-6 leading-relaxed">
-          {formatDate(slot.date)} · <strong className="text-[#1d1d1f] font-medium">{formatTime(slot.start_time)}</strong>
+          {formatDate(slot.date, { weekday: 'long', day: 'numeric', month: 'long' })} · <strong className="text-[#1d1d1f] font-medium">{formatTime(slot.start_time)}</strong>
         </p>
 
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-2">
@@ -193,7 +200,10 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
               <input
                 type="text"
                 value={instagram}
-                onChange={(e) => setInstagram(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^a-zA-Z0-9_.]/g, '').slice(0, 30)
+                  setInstagram(val)
+                }}
                 placeholder="username"
                 autoComplete="off"
                 className="flex-1 px-3 py-3 text-sm font-normal text-[#1d1d1f] bg-transparent outline-none"
@@ -223,7 +233,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
             <p className="text-sm text-red-600 bg-red-50/80 border border-red-200/50 rounded-2xl px-4 py-3 m-0">{error}</p>
           )}
 
-          <div className="flex gap-3 justify-end mt-2">
+          <div className="flex gap-3 justify-center mt-2">
             <button
               type="button"
               onClick={onCancel}
@@ -235,11 +245,18 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
             <button
               type="submit"
               disabled={submitting}
-              className="bg-[#34c759] hover:bg-[#28a745] text-white border-none rounded-full px-6 py-2.5 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-[0_4px_16px_rgba(52,199,89,0.35)]"
+              className={`${greenBtnCls} px-6 py-2.5`}
             >
               {submitting ? 'Se procesează...' : 'Rezervă'}
             </button>
           </div>
+          <p className="text-center text-[11px] pt-2 text-[#9ca3af] leading-relaxed px-2">
+            Prin trimiterea acestui formular, ești de acord cu{' '}
+            <a href="/politica-de-confidentialitate" target="_blank" rel="noreferrer" className="underline hover:text-[#6e6e73] transition-colors">
+              politica noastră de confidențialitate
+            </a>{' '}
+            și cu prelucrarea datelor tale personale în scopul gestionării programării.
+          </p>
         </form>
       </div>
     </div>

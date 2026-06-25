@@ -1,3 +1,5 @@
+import { getDateStr } from '../../utils/dateUtils'
+
 const DAYS = ['Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sâ', 'Du']
 const MONTHS = [
   'Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie',
@@ -14,14 +16,16 @@ interface Props {
   onNext: () => void
   allowPast?: boolean
   disablePrev?: boolean
+  allDatesSelectable?: boolean
+  maxDate?: string
 }
 
 export function MonthCalendar({
-  year, month, datesWithSlots, selectedDate, onDaySelect, onPrev, onNext, allowPast, disablePrev,
+  year, month, datesWithSlots, selectedDate, onDaySelect, onPrev, onNext, allowPast, disablePrev, allDatesSelectable, maxDate,
 }: Props) {
   const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7
   const daysInMonth = new Date(year, month, 0).getDate()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getDateStr(new Date())
 
   const cells: (number | null)[] = [
     ...Array(firstDow).fill(null),
@@ -71,8 +75,11 @@ export function MonthCalendar({
           const hasSlots = datesWithSlots.has(dateStr)
           const isSelected = selectedDate === dateStr
           const isPast = dateStr < today
-          const isAvailable = hasSlots && (!isPast || !!allowPast)
-          const dow = (firstDow + day - 1) % 7 // 0=Lu ... 5=Sâ, 6=Du
+          const isAfterMax = maxDate ? dateStr > maxDate : false
+          const isAvailable = allDatesSelectable
+            ? (!isPast || !!allowPast) && !isAfterMax
+            : hasSlots && (!isPast || !!allowPast) && !isAfterMax
+          const dow = (firstDow + day - 1) % 7
           const isWeekend = dow === 5 || dow === 6
 
           return (

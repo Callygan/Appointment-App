@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { getDateStr } from '../../utils/dateUtils'
+import { alertCls, adminInputCls, labelCls } from '../../components/ui/formStyles'
 import { useServices } from '../../hooks/useServices'
 import type { Service } from '../../types'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
@@ -12,6 +14,7 @@ export function ServicesTab() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // form fields
   const [name, setName] = useState('')
@@ -20,8 +23,7 @@ export function ServicesTab() {
   const [price, setPrice] = useState<number | ''>('')
   const [serviceType, setServiceType] = useState<'main' | 'extra'>('main')
 
-  const inputCls = "bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl px-4 py-2.5 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 focus:border-[#34c759] transition-all w-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)]"
-  const labelCls = "flex flex-col gap-1.5 text-xs font-semibold text-[#6e6e73] uppercase tracking-wide"
+  const inputCls = adminInputCls
 
   function openAdd() {
     setEditId(null)
@@ -66,7 +68,8 @@ export function ServicesTab() {
       : await supabase.from('services').insert(payload)
 
     if (error) {
-      setMessage({ type: 'error', text: error.message })
+      if (import.meta.env.DEV) console.error('saveService error:', error)
+      setMessage({ type: 'error', text: 'Nu s-a putut salva serviciul. Încearcă din nou.' })
     } else {
       setMessage({ type: 'success', text: editId ? 'Serviciu actualizat.' : 'Serviciu adăugat.' })
       refresh()
@@ -76,20 +79,37 @@ export function ServicesTab() {
   }
 
   async function handleDelete(id: string, svcName: string) {
-    // Decuplăm mai întâi programările anulate de acest serviciu
-    await supabase
+    const todayStr = getDateStr(new Date())
+
+    // Verificăm manual dacă există programări active viitoare
+    const { data: activeAppts } = await supabase
       .from('appointments')
-      .update({ service_id: null })
+      .select('id, appointment_date, available_slots(date)')
       .eq('service_id', id)
-      .eq('status', 'cancelled')
+      .in('status', ['pending', 'confirmed'])
+
+    const hasFutureActive = (activeAppts ?? []).some((a: { appointment_date: any; available_slots: any }) => {
+      const slots = a.available_slots
+      const slotDate = Array.isArray(slots) ? slots[0]?.date : slots?.date
+      const date = slotDate ?? a.appointment_date ?? null
+      return date === null || date >= todayStr
+    })
+
+    if (hasFutureActive) {
+      setDeleteError(`Nu poți șterge serviciul "${svcName}" — există programări viitoare active pentru el.`)
+      setPendingDelete(null)
+      return
+    }
+
+    // Fără programări viitoare active — nullificăm toate referințele și ștergem
+    await supabase.from('appointments').update({ service_id: null }).eq('service_id', id)
 
     const { error } = await supabase.from('services').delete().eq('id', id)
     if (error) {
-      const msg = error.message.includes('foreign key')
-        ? `Nu poți șterge serviciul "${svcName}" atâta timp cât există o programare activă pentru acest serviciu.`
-        : error.message
-      setMessage({ type: 'error', text: msg })
+      if (import.meta.env.DEV) console.error('deleteService error:', error)
+      setDeleteError('Nu s-a putut șterge serviciul. Încearcă din nou.')
     } else {
+      setDeleteError(null)
       refresh()
     }
     setPendingDelete(null)
@@ -109,13 +129,13 @@ export function ServicesTab() {
 
       {/* Form add/edit — slide-down to center */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+        className={`fixed inset-0 z-50 flex items-center justify-center ${showAdd ? 'pointer-events-auto' : 'pointer-events-none'}`}
         aria-hidden={!showAdd}
       >
         {/* Backdrop */}
         <div
           onClick={closeForm}
-          className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto"
+          className="absolute inset-0 bg-black/30 backdrop-blur-sm"
           style={{
             opacity: showAdd ? 1 : 0,
             transition: 'opacity 0.3s ease',
@@ -124,7 +144,7 @@ export function ServicesTab() {
         />
         {/* Panel */}
         <div
-          className="relative w-full max-w-md mx-4 glass-heavy rounded-3xl px-6 pt-6 pb-7 shadow-[0_8px_40px_rgba(0,0,0,0.18)] pointer-events-auto"
+          className={`relative w-full max-w-md mx-4 glass-heavy rounded-3xl px-6 pt-6 pb-7 shadow-[0_8px_40px_rgba(0,0,0,0.18)] ${showAdd ? 'pointer-events-auto' : 'pointer-events-none'}`}
           style={{
             transform: showAdd ? 'translateY(0)' : 'translateY(-60px)',
             opacity: showAdd ? 1 : 0,
@@ -194,7 +214,7 @@ export function ServicesTab() {
             </label>
 
             {message && (
-              <p className={`text-sm rounded-2xl px-4 py-3 m-0 ${message.type === 'success' ? 'bg-[#34c759]/15 text-[#1a6b2e]' : 'bg-red-50/80 text-red-600'}`}>
+              <p className={alertCls(message.type)}>
                 {message.text}
               </p>
             )}
@@ -303,6 +323,18 @@ export function ServicesTab() {
           onConfirm={() => handleDelete(pendingDelete.id, pendingDelete.name)}
           onDismiss={() => setPendingDelete(null)}
         />
+      )}
+
+      {deleteError && (
+        <div className="glass rounded-2xl px-5 py-4 flex items-start gap-3">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" className="shrink-0 mt-0.5"><circle cx="9" cy="9" r="7.5"/><path d="M9 5.5v4M9 12h.01"/></svg>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-red-600">{deleteError}</p>
+          </div>
+          <button onClick={() => setDeleteError(null)} className="shrink-0 text-[#6e6e73] hover:text-red-500 bg-transparent border-none cursor-pointer p-0.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
       )}
     </div>
   )

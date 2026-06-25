@@ -27,7 +27,7 @@ export function useAvailableSlots(year: number, month: number) {
       .order('date')
       .order('start_time')
       .then(({ data, error }) => {
-        if (error) setError(error.message)
+        if (error) setError('Nu s-au putut încărca intervalele disponibile.')
         else setSlots(data ?? [])
         setLoading(false)
       })

@@ -1,20 +1,11 @@
 import { useRef, useLayoutEffect } from 'react'
+import { formatTime, formatDate } from '../../utils/dateUtils'
 import type { AvailableSlot } from '../../types'
 
 interface Props {
   date: string
   slots: AvailableSlot[]
   onBook: (slot: AvailableSlot) => void
-}
-
-function formatTime(time: string) {
-  return time.slice(0, 5)
-}
-
-function formatDate(date: string) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('ro-RO', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
 }
 
 export function DaySlots({ date, slots, onBook }: Props) {

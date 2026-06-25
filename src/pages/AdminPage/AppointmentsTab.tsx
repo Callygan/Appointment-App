@@ -1,24 +1,30 @@
 import { useState } from 'react'
 import { useAppointments } from '../../hooks/useAppointments'
+import { getDateStr, formatDate, formatTime } from '../../utils/dateUtils'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
-
-function formatDate(date: string) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('ro-RO', {
-    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-  })
-}
-
-function formatTime(time: string) {
-  return time.slice(0, 5)
-}
 
 export function AppointmentsTab() {
   const { appointments, loading, error, confirmAppointment, cancelAppointment } = useAppointments()
   const [pendingCancel, setPendingCancel] = useState<{ id: string; slotId: string; name: string } | null>(null)
   const [search, setSearch] = useState('')
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getDateStr(new Date())
   const effectiveDate = (a: typeof appointments[0]) => a.available_slots?.date ?? a.appointment_date ?? null
+  const effectiveEndTime = (a: typeof appointments[0]) => a.available_slots?.end_time ?? a.appointment_time ?? null
+
+  function isAppointmentPast(a: typeof appointments[0]): boolean {
+    const d = effectiveDate(a)
+    if (!d) return false
+    if (d < today) return true
+    if (d === today) {
+      const end = effectiveEndTime(a)
+      if (!end) return false
+      const now = new Date()
+      const [h, m] = end.split(':').map(Number)
+      return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m)
+    }
+    return false
+  }
 
   function matchesSearch(a: typeof appointments[0]) {
     if (!search.trim()) return true
@@ -32,11 +38,11 @@ export function AppointmentsTab() {
   const pending = appointments.filter((a) => a.status === 'pending' && matchesSearch(a))
   const upcoming = appointments.filter((a) => {
     const d = effectiveDate(a)
-    return a.status === 'confirmed' && d !== null && d >= today && matchesSearch(a)
+    return a.status === 'confirmed' && d !== null && !isAppointmentPast(a) && matchesSearch(a)
   })
   const past = appointments.filter((a) => {
     const d = effectiveDate(a)
-    return a.status === 'confirmed' && d !== null && d < today && matchesSearch(a)
+    return a.status === 'confirmed' && d !== null && isAppointmentPast(a) && matchesSearch(a)
   })
   const cancelled = appointments.filter((a) => a.status === 'cancelled' && matchesSearch(a))
 
@@ -68,11 +74,11 @@ export function AppointmentsTab() {
         )}
         </div>
       </div>
-      <Section title={`În așteptare (${pending.length})`} color="warning">
-        {pending.length === 0
-          ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări în așteptare.</p>
-          : <AppointmentTable items={pending} onRequestCancel={setPendingCancel} onConfirm={confirmAppointment} showCancel showConfirm />}
-      </Section>
+      {pending.length > 0 && (
+        <Section title={`În așteptare (${pending.length})`} color="warning">
+          <AppointmentTable items={pending} onRequestCancel={setPendingCancel} onConfirm={confirmAppointment} showCancel showConfirm />
+        </Section>
+      )}
 
       <Section title={`Viitoare (${upcoming.length})`} color="success">
         {upcoming.length === 0
@@ -243,7 +249,7 @@ function AppointmentTable({ items, onRequestCancel, onConfirm, showCancel, showC
                     {showCancel && (
                       <button
                         onClick={() => onRequestCancel({ id: a.id, slotId: a.slot_id, name: a.client_name })}
-                        className="rounded-full px-3 py-1 text-xs text-red-500 cursor-pointer hover:bg-red-50/60 transition-all border border-red-200/50 bg-white/30 hover:scale-105"
+                        className="rounded-full px-3 py-1 text-xs text-white bg-red-500 hover:bg-red-600 cursor-pointer transition-all border-none shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:scale-105"
                       >
                         Anulează
                       </button>

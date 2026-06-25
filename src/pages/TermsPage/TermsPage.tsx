@@ -1,4 +1,3 @@
-import { Header } from '../../components/Header/Header'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -16,7 +15,6 @@ export function TermsPage() {
 
   return (
     <div className="flex flex-col items-center px-4 pt-28 pb-16">
-      <Header />
 
       <div className="w-full max-w-2xl">
         <header className="text-center mb-10">

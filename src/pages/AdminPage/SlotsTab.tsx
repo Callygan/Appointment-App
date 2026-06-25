@@ -1,5 +1,7 @@
 ﻿import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { alertCls, adminInputCls, labelCls as baseLabelCls } from '../../components/ui/formStyles'
+import { greenBtnCls } from '../../components/ui/buttons'
 import { MonthCalendar } from '../../components/MonthCalendar/MonthCalendar'
 import { useAdminSlots } from '../../hooks/useAdminSlots'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
@@ -51,7 +53,7 @@ export function SlotsTab() {
   const [tab, setTab] = useState<'single' | 'bulk'>('single')
   const [sDate, setSDate] = useState('')
   const [sStart, setSStart] = useState('10:00')
-  const [sEnd, setSEnd] = useState('12:00')
+  const [sDuration, setSDuration] = useState(60)
   const [bFrom, setBFrom] = useState('')
   const [bTo, setBTo] = useState('')
   const [bStart, setBStart] = useState('10:00')
@@ -67,14 +69,13 @@ export function SlotsTab() {
   const [showDeleteModal, setShowDeleteModal] = useState<{ id: string; label: string } | null>(null)
   const { slots: adminSlots, datesWithSlots: adminDates, loading: adminLoading, deleteSlot, refresh: adminRefresh } = useAdminSlots(adminYear, adminMonth)
 
-  const inputCls = "bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl px-4 py-2.5 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 focus:border-[#34c759] transition-all w-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] cursor-pointer"
-  const labelCls = "flex flex-col gap-1.5 text-xs font-semibold text-[#6e6e73] uppercase tracking-wide cursor-pointer"
+  const inputCls = `${adminInputCls} cursor-pointer`
+  const labelCls = `${baseLabelCls} cursor-pointer`
   const openPicker = (e: React.MouseEvent<HTMLLabelElement>) => {
     const input = e.currentTarget.querySelector('input') as HTMLInputElement | null
     input?.showPicker?.()
   }
-  const submitBtnCls = "bg-[#34c759] hover:bg-[#28a745] text-white border-none rounded-full py-3 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-[0_4px_16px_rgba(52,199,89,0.3)]"
-  const msgCls = (type: 'success' | 'error') => `text-sm rounded-2xl px-4 py-3 m-0 ${type === 'success' ? 'bg-[#34c759]/15 text-[#1a6b2e]' : 'bg-red-50/80 text-red-600'}`
+  const submitBtnCls = `${greenBtnCls} w-full py-3`
 
   function toggleDay(day: number) {
     setBDays((prev) => prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day])
@@ -82,7 +83,9 @@ export function SlotsTab() {
 
   async function handleSingleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (sStart >= sEnd) { setMessage({ type: 'error', text: 'Ora de sfarsit trebuie sa fie dupa ora de start.' }); return }
+    const [sh, sm] = sStart.split(':').map(Number)
+    const endTotal = sh * 60 + sm + sDuration
+    const sEnd = `${String(Math.floor(endTotal / 60)).padStart(2, '0')}:${String(endTotal % 60).padStart(2, '0')}`
     setSaving(true); setMessage(null)
     const { data: existing } = await supabase.from('available_slots').select('start_time, end_time').eq('date', sDate)
     if (existing?.some(s => overlaps(sStart, sEnd, s.start_time, s.end_time))) {
@@ -90,7 +93,8 @@ export function SlotsTab() {
       setSaving(false); return
     }
     const { error } = await supabase.from('available_slots').insert({ date: sDate, start_time: sStart, end_time: sEnd })
-    setMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Slot adaugat cu succes.' })
+    if (import.meta.env.DEV && error) console.error('insertSlot error:', error)
+    setMessage(error ? { type: 'error', text: 'Nu s-a putut adăuga slotul. Încearcă din nou.' } : { type: 'success', text: 'Slot adaugat cu succes.' })
     adminRefresh(); setSaving(false)
   }
 
@@ -107,8 +111,9 @@ export function SlotsTab() {
     const newRows = allRows.filter(row => !existing?.some(s => s.date === row.date && overlaps(row.start_time, row.end_time, s.start_time, s.end_time)))
     if (newRows.length === 0) { setMessage({ type: 'error', text: 'Toate sloturile exista deja sau se suprapun.' }); setSaving(false); return }
     const { error } = await supabase.from('available_slots').insert(newRows)
+    if (import.meta.env.DEV && error) console.error('insertBulkSlots error:', error)
     const skipped = allRows.length - newRows.length
-    setMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: `${newRows.length} slot(uri) adaugate in ${dates.length} zi(le).${skipped > 0 ? ` (${skipped} sarite, existau deja)` : ''}` })
+    setMessage(error ? { type: 'error', text: 'Nu s-au putut adăuga sloturile. Încearcă din nou.' } : { type: 'success', text: `${newRows.length} slot(uri) adaugate in ${dates.length} zi(le).${skipped > 0 ? ` (${skipped} sarite, existau deja)` : ''}` })
     adminRefresh(); setSaving(false)
   }
 
@@ -124,20 +129,31 @@ export function SlotsTab() {
         </div>
         {tab === 'single' && (
           <form className="flex flex-col gap-4" onSubmit={handleSingleSubmit}>
-            <label className={labelCls} onClick={openPicker}>Data<input type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
             <div className="grid grid-cols-2 gap-3">
-              <label className={labelCls} onClick={openPicker}>Ora start<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={inputCls} /></label>
-              <label className={labelCls} onClick={openPicker}>Ora sfarsit<input type="time" value={sEnd} onChange={(e) => setSEnd(e.target.value)} required className={inputCls} /></label>
+              <label className={labelCls} onClick={openPicker}>Data<input lang="en-GB" type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
+              <label className={labelCls} onClick={openPicker}>Ora<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={inputCls} /></label>
             </div>
-            {message && <p className={msgCls(message.type)}>{message.text}</p>}
-            <button type="submit" disabled={saving || !sDate || !sStart || !sEnd} className={submitBtnCls}>{saving ? 'Se salveaza...' : 'Adauga slot'}</button>
+            <label className={labelCls}>Durata
+              {(() => {
+                const opts = [{ value: 30, label: '30 min' }, { value: 60, label: '1h' }, { value: 90, label: '1.5h' }, { value: 120, label: '2h' }]
+                const idx = opts.findIndex((o) => o.value === sDuration)
+                return (
+                  <div className="relative flex bg-white/30 rounded-xl p-1 mt-0.5">
+                    <div className="absolute top-1 bottom-1 rounded-lg bg-white/80 shadow-sm pointer-events-none" style={{ width: `calc((100% - 8px) / ${opts.length})`, transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(calc(${idx} * 100% + ${idx} * 2px))` }} />
+                    {opts.map((o) => (<button key={o.value} type="button" onClick={() => setSDuration(o.value)} className={`relative z-10 flex-1 rounded-lg py-2 text-xs font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${sDuration === o.value ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>{o.label}</button>))}
+                  </div>
+                )
+              })()}
+            </label>
+            {message && <p className={alertCls(message.type)}>{message.text}</p>}
+            <button type="submit" disabled={saving || !sDate || !sStart} className={submitBtnCls}>{saving ? 'Se salveaza...' : 'Adauga slot'}</button>
           </form>
         )}
         {tab === 'bulk' && (
           <form className="flex flex-col gap-4" onSubmit={handleBulkSubmit}>
             <div className="grid grid-cols-2 gap-3">
-              <label className={labelCls} onClick={openPicker}>De la data<input type="date" value={bFrom} onChange={(e) => setBFrom(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
-              <label className={labelCls} onClick={openPicker}>Pana la data<input type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
+              <label className={labelCls} onClick={openPicker}>De la data<input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={inputCls} /></label>
+              <label className={labelCls} onClick={openPicker}>Pana la data<input lang="en-GB" type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={bFrom || localDateStr(today)} className={inputCls} /></label>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <label className={labelCls} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={inputCls} /></label>
@@ -163,7 +179,7 @@ export function SlotsTab() {
                 ))}
               </div>
             </div>
-            {message && <p className={msgCls(message.type)}>{message.text}</p>}
+            {message && <p className={alertCls(message.type)}>{message.text}</p>}
             <button type="submit" disabled={saving || !bFrom || !bTo || !bStart || !bEnd || bDays.length === 0} className={submitBtnCls}>{saving ? 'Se genereaza...' : 'Genereaza sloturi'}</button>
           </form>
         )}
@@ -193,7 +209,7 @@ export function SlotsTab() {
                 {slotsForAdminDate.map((slot, i) => (
                   <li key={slot.id} className={`flex items-center justify-between px-5 py-3 ${i !== slotsForAdminDate.length - 1 ? 'border-b border-white/30' : ''}`}>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-[#1d1d1f] tabular-nums">{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</span>
+                      <span className="text-sm font-semibold text-[#1d1d1f] tabular-nums">{slot.start_time.slice(0, 5)}</span>
                       {slot.is_booked ? <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f59e0b]/15 text-[#b45309]">Rezervat</span> : <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#1a6b2e]">Liber</span>}
                     </div>
                     {!slot.is_booked && (

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { MonthCalendar } from '../../components/MonthCalendar/MonthCalendar'
 import { DaySlots } from '../../components/DaySlots/DaySlots'
 import { BookingForm } from '../../components/BookingForm/BookingForm'
-import { Header } from '../../components/Header/Header'
 import { SuccessPage } from '../SuccessPage/SuccessPage'
 import { useAvailableSlots } from '../../hooks/useAvailableSlots'
 import { useServices } from '../../hooks/useServices'
@@ -51,7 +50,6 @@ export function BookingPage() {
 
   return (
     <div className="flex flex-col items-center px-4 pt-28 pb-16">
-      <Header />
       <header className="text-center mb-8">
         <h1 className="text-3xl font-semibold text-[#1d1d1f] tracking-tight mb-2">Fă-ți o programare</h1>
         <p className="text-sm text-[#6e6e73]">Selectează o zi disponibilă, apoi alege un interval orar.</p>
@@ -73,7 +71,7 @@ export function BookingPage() {
 
         <div className="text-xs mb-1 h-1 leading-4 text-center">
             {error
-              ? <span className="text-red-500">Eroare la încărcarea intervalelor: {error}</span>
+              ? <span className="text-red-500">Eroare la încărcarea intervalelor. Reîncarcă pagina.</span>
               : loading
                 ? <span className="text-[#6e6e73]">Se încarcă...</span>
                 : null}

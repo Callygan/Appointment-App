@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { getDateStr } from '../utils/dateUtils'
 
 export interface StatAppointment {
   id: string
@@ -10,12 +11,10 @@ export interface StatAppointment {
   client_phone: string
   service_id?: string
   services?: { name: string; price?: number }
-  available_slots?: { date: string; start_time: string } | null
+  available_slots?: { date: string; start_time: string; end_time?: string } | null
 }
 
-function toIsoDate(d: Date) {
-  return d.toISOString().split('T')[0]
-}
+const toIsoDate = getDateStr
 
 /** Returnează data efectivă: câmpul salvat la ștergere sau data slotului activ */
 function effectiveDate(r: StatAppointment) {
@@ -31,6 +30,7 @@ export interface StatsData {
   cancelledCount: number
   cancellationRate: number
   estimatedRevenue: number
+  realizedRevenue: number
   byMonth: { label: string; count: number; revenue: number }[]
   byHour: { label: string; count: number }[]
   byDayOfWeek: { label: string; count: number }[]
@@ -57,6 +57,22 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
   })
 
   const estimatedRevenue = active.reduce((sum, r) => sum + (r.services?.price ?? 0), 0)
+
+  // Venit realizat = doar programări confirmate deja trecute
+  const today = toIsoDate(new Date())
+  const nowMs = Date.now()
+  const realizedRevenue = active.filter(r => {
+    const d = effectiveDate(r)!
+    if (d < today) return true
+    if (d === today) {
+      const end = r.available_slots?.end_time ?? r.appointment_time ?? null
+      if (!end) return false
+      const [h, m] = end.split(':').map(Number)
+      const endMs = new Date().setHours(h, m, 0, 0)
+      return nowMs >= endMs
+    }
+    return false
+  }).reduce((sum, r) => sum + (r.services?.price ?? 0), 0)
 
   // Perioada anterioară (MTD vs prior MTD)
   // Aliniază la ziua 1 a lunii anterioare, aceeași durată
@@ -196,6 +212,7 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     cancelledCount: cancelled.length,
     cancellationRate: totalBookings > 0 ? Math.round((cancelled.length / totalBookings) * 100) : 0,
     estimatedRevenue,
+    realizedRevenue,
     byMonth,
     byHour,
     byDayOfWeek,
@@ -220,7 +237,7 @@ export function useStatistics(from: string, to: string) {
 
     supabase
       .from('appointments')
-      .select('id, status, appointment_date, appointment_time, client_name, client_phone, service_id, services(name, price), available_slots(date, start_time)')
+      .select('id, status, appointment_date, appointment_time, client_name, client_phone, service_id, services(name, price), available_slots(date, start_time, end_time)')
       .then(({ data: rows, error: err }) => {
         if (err) {
           setError(err.message)

@@ -49,12 +49,16 @@ export function useAdminSlots(year: number, month: number) {
     // Fetch slot date/time so we can preserve it on any linked appointments
     const { data: slot } = await supabase.from('available_slots').select('date, start_time').eq('id', id).single()
     if (slot) {
-      await supabase.from('appointments')
+      const { error: updateErr } = await supabase.from('appointments')
         .update({ appointment_date: slot.date, appointment_time: slot.start_time })
         .eq('slot_id', id)
+      if (updateErr) {
+        if (import.meta.env.DEV) console.error('deleteSlot: update appointments failed:', updateErr)
+        return 'Nu s-a putut actualiza programările asociate. Slotul nu a fost șters.'
+      }
     }
     const { error } = await supabase.from('available_slots').delete().eq('id', id)
-    if (error) { console.error('deleteSlot error:', error); return error.message }
+    if (error) { if (import.meta.env.DEV) console.error('deleteSlot error:', error); return 'Nu s-a putut șterge slotul. Încearcă din nou.' }
     refresh()
     return null
   }

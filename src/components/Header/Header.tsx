@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
 const NAV_LINKS = [
   { label: 'Programări', href: '/' },
@@ -10,31 +11,94 @@ const NAV_LINKS = [
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { pathname } = useLocation()
+  const activeIndex = NAV_LINKS.findIndex(l => l.href === pathname)
+  const navRef = useRef<HTMLUListElement>(null)
+  const [measures, setMeasures] = useState<{ left: number; width: number }[]>([])
+
+  // Măsoară pozițiile o singură dată după mount
+  useLayoutEffect(() => {
+    const ul = navRef.current
+    if (!ul) return
+    const lis = ul.querySelectorAll<HTMLElement>('li')
+    setMeasures(Array.from(lis).map(li => ({ left: li.offsetLeft, width: li.offsetWidth })))
+  }, [])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 flex justify-center px-4 pt-4">
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-[39] md:hidden"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
       <nav className="glass rounded-2xl px-4 py-2.5 w-full max-w-4xl flex items-center justify-between">
 
-        <a href="/" className="flex items-center gap-2.5 no-underline">
-          {/* <img src="/../public/logo.png" alt="Nail Bar logo" className="w-8 h-8 rounded-xl object-cover" /> */}
-          <span className="text-sm font-semibold text-[#1d1d1f] tracking-tight">Nail Bar</span>
-        </a>
+        <Link to="/" className="flex items-center gap-3 no-underline group select-none">
+          {/* Mark: rounded square + geometric N path */}
+          <div className="relative w-8 h-8 overflow-hidden rounded-xl flex-shrink-0">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="block">
+              <defs>
+                <linearGradient id="bg-g" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#f43f5e" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+                <linearGradient id="shine-g" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="white" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="white" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <rect width="32" height="32" rx="9" fill="url(#bg-g)" />
+              {/* Top-half shine */}
+              <rect width="32" height="16" rx="0" fill="url(#shine-g)" />
+              {/* Geometric NB lettermark */}
+              <text x="16" y="21.5" textAnchor="middle" fill="white" fontSize="16" fontWeight="400" fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif" letterSpacing="0.5">NB</text>
+            </svg>
+            {/* Shimmer sweep on hover */}
+            <div
+              className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none"
+              style={{ background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%)' }}
+            />
+          </div>
 
-        <ul className="hidden sm:flex items-center gap-1 list-none m-0 p-0">
-          {NAV_LINKS.map((link) => (
+          {/* Wordmark */}
+          <div className="flex flex-col leading-none gap-[3px]">
+            <span
+              className="text-[13px] font-semibold tracking-tight transition-all duration-300"
+              style={{ color: '#1d1d1f' }}
+            >
+              nail<span className="font-black">bar</span>
+            </span>
+            <span className="text-[7px] font-medium tracking-[0.3em] uppercase text-[#b0b0b8] group-hover:text-[#a855f7] transition-colors duration-300">by Daniela Cobosnean</span>
+          </div>
+        </Link>
+
+        <ul ref={navRef} className="hidden md:flex items-center gap-1 list-none m-0 p-0 relative">
+          <div
+            className="absolute top-0 bottom-0 rounded-xl bg-white/70 shadow-sm pointer-events-none"
+            style={{
+              width: measures[activeIndex]?.width ?? 0,
+              opacity: measures[activeIndex] && activeIndex !== -1 ? 1 : 0,
+              transform: `translateX(${measures[activeIndex]?.left ?? 0}px)`,
+              transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1), width 0.28s cubic-bezier(0.4,0,0.2,1)',
+            }}
+          />
+          {NAV_LINKS.map((link, i) => (
             <li key={link.href}>
-              <a
-                href={link.href}
-                className="text-xs font-medium text-[#6e6e73] hover:text-[#1d1d1f] no-underline px-3 py-2 rounded-xl hover:bg-white/40 transition-all"
+              <Link
+                to={link.href}
+                className={`relative z-10 text-xs font-medium no-underline px-3 py-2 rounded-xl transition-colors duration-200 block ${
+                  i === activeIndex ? 'text-[#1d1d1f]' : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-white/40'
+                }`}
               >
                 {link.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
 
         <button
-          className="sm:hidden w-8 h-8 flex flex-col items-center justify-center gap-1.5 border-none bg-transparent cursor-pointer p-0"
+          className="md:hidden w-8 h-8 flex flex-col items-center justify-center gap-1.5 border-none bg-transparent cursor-pointer p-0"
           onClick={() => setMenuOpen((o) => !o)}
           aria-label={menuOpen ? 'Închide meniu' : 'Deschide meniu'}
         >
@@ -44,20 +108,33 @@ export function Header() {
         </button>
       </nav>
 
-      {menuOpen && (
-        <div className="absolute top-[4.5rem] left-4 right-4 glass-heavy rounded-2xl py-2 sm:hidden">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="block px-5 py-3 text-sm font-medium text-[#1d1d1f] no-underline hover:bg-white/40 transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
-      )}
+      <div
+        className="absolute top-[4.5rem] left-4 right-4 glass rounded-2xl py-2 md:hidden overflow-hidden z-[41]"
+        style={{
+          opacity: menuOpen ? 1 : 0,
+          transform: menuOpen ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.97)',
+          pointerEvents: menuOpen ? 'auto' : 'none',
+          transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        {NAV_LINKS.map((link, i) => (
+          <Link
+            key={link.href}
+            to={link.href}
+            onClick={() => setMenuOpen(false)}
+            className="block px-5 py-3 text-sm font-medium text-[#1d1d1f] no-underline hover:bg-white/40 transition-colors"
+            style={{
+              opacity: menuOpen ? 1 : 0,
+              transform: menuOpen ? 'translateX(0)' : 'translateX(-12px)',
+              transition: menuOpen
+                ? `opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1) ${60 + i * 55}ms, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) ${60 + i * 55}ms`
+                : `opacity 0.18s ease ${i * 30}ms, transform 0.18s ease ${i * 30}ms`,
+            }}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
     </header>
   )
 }

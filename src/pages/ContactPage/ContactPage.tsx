@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Header } from '../../components/Header/Header'
 import {
   validateName, validateEmail, validateMessage, validatePhone,
-  capitalizeWords, formatPhoneNumber, inputCls, labelCls, inputBorderCls,
+  capitalizeWords, formatPhoneNumber,
 } from '../../utils/validation'
+import { inputCls, labelCls, inputBorderCls } from '../../components/ui/formStyles'
+import { greenBtnCls } from '../../components/ui/buttons'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 
 const FORMSPREE_ID = 'maqgyqvo'
@@ -61,7 +62,6 @@ export function ContactPage() {
 
   return (
     <div className="flex flex-col items-center px-4 pt-28 pb-16">
-      <Header />
 
 
       <div className="w-full max-w-4xl">
@@ -149,7 +149,7 @@ export function ContactPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="bg-[#34c759] hover:bg-[#28a745] text-white border-none rounded-full px-6 py-2.5 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_16px_rgba(52,199,89,0.35)]"
+                  className={`${greenBtnCls} px-6 py-2.5`}
                 >
                   {submitting ? 'Se trimite...' : 'Trimite mesajul'}
                 </button>
