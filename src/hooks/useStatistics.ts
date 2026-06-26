@@ -173,10 +173,11 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     }
   }
 
-  // Top clienți în perioadă
+  // Top clienți în perioadă (excluși clienții anonimizați GDPR)
   const clientMap = new Map<string, { name: string; phone: string; count: number }>()
   for (const r of active) {
     const phone = r.client_phone
+    if (phone === 'număr anonim') continue
     const prev = clientMap.get(phone) ?? { name: r.client_name, phone, count: 0 }
     clientMap.set(phone, { ...prev, count: prev.count + 1 })
   }

@@ -33,34 +33,7 @@ export function Header() {
         />
       )}
       <nav className="glass rounded-2xl px-4 py-2.5 w-full max-w-4xl flex items-center justify-between">
-
-        <Link to="/" className="flex items-center gap-3 no-underline group select-none">
-          {/* Mark: rounded square + geometric N path */}
-          <div className="relative w-8 h-8 overflow-hidden rounded-xl flex-shrink-0">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="block">
-              <defs>
-                <linearGradient id="bg-g" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#f43f5e" />
-                  <stop offset="100%" stopColor="#a855f7" />
-                </linearGradient>
-                <linearGradient id="shine-g" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="white" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="white" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <rect width="32" height="32" rx="9" fill="url(#bg-g)" />
-              {/* Top-half shine */}
-              <rect width="32" height="16" rx="0" fill="url(#shine-g)" />
-              {/* Geometric NB lettermark */}
-              <text x="16" y="21.5" textAnchor="middle" fill="white" fontSize="16" fontWeight="400" fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif" letterSpacing="0.5">NB</text>
-            </svg>
-            {/* Shimmer sweep on hover */}
-            <div
-              className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none"
-              style={{ background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%)' }}
-            />
-          </div>
-
+        <Link to="/" className="flex items-center pl-2 gap-3 no-underline group select-none">
           {/* Wordmark */}
           <div className="flex flex-col leading-none gap-[3px]">
             <span

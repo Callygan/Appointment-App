@@ -144,28 +144,34 @@ export function StatisticsTab() {
 
         {/* Custom date pickers */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
-          <span className="text-xs text-[#6e6e73]">Interval custom:</span>
-          <div className="flex items-center gap-2">
-            <input
-              lang="en-GB"
-              type="date"
-              value={customFrom}
-              max={customTo || toIso(today)}
-              onChange={e => { setCustomFrom(e.target.value); setQuick('current') }}
-              onClick={e => (e.currentTarget as HTMLInputElement).showPicker?.()}
-              className="glass rounded-xl px-3 py-1.5 text-xs text-[#1d1d1f] border-none outline-none cursor-pointer w-full sm:w-auto"
-            />
+          <span className="text-xs text-[#6e6e73] shrink-0">Interval custom:</span>
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            <div className="relative min-w-0">
+              <input
+                lang="en-GB"
+                type="date"
+                value={customFrom}
+                max={customTo || toIso(today)}
+                onChange={e => { setCustomFrom(e.target.value); setQuick('current') }}
+                onClick={e => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                className="glass rounded-xl px-3 py-1.5 text-xs text-[#1d1d1f] border-none outline-none cursor-pointer w-full"
+              />
+              {!customFrom && <span className="date-placeholder absolute inset-0 flex items-center px-3 text-xs text-[#aaa] pointer-events-none">De la</span>}
+            </div>
             <span className="text-xs text-[#6e6e73] shrink-0">—</span>
-            <input
-              lang="en-GB"
-              type="date"
-              value={customTo}
-              min={customFrom}
-              max={toIso(today)}
-              onChange={e => { setCustomTo(e.target.value); setQuick('current') }}
-              onClick={e => (e.currentTarget as HTMLInputElement).showPicker?.()}
-              className="glass rounded-xl px-3 py-1.5 text-xs text-[#1d1d1f] border-none outline-none cursor-pointer w-full sm:w-auto"
-            />
+            <div className="relative min-w-0">
+              <input
+                lang="en-GB"
+                type="date"
+                value={customTo}
+                min={customFrom}
+                max={toIso(today)}
+                onChange={e => { setCustomTo(e.target.value); setQuick('current') }}
+                onClick={e => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                className="glass rounded-xl px-3 py-1.5 text-xs text-[#1d1d1f] border-none outline-none cursor-pointer w-full"
+              />
+              {!customTo && <span className="date-placeholder absolute inset-0 flex items-center px-3 text-xs text-[#aaa] pointer-events-none">Până la</span>}
+            </div>
           </div>
           {isCustomActive && (
             <span className="text-xs text-[#34c759] font-medium">

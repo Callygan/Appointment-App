@@ -232,18 +232,18 @@ export function ServicesTab() {
       </div>
 
       {/* Lista servicii */}
-      <div className="glass rounded-2xl overflow-x-auto">
+      <div className="glass rounded-2xl">
         {services.length === 0 ? (
           <p className="text-sm text-[#6e6e73] px-5 py-6 text-center">Niciun serviciu adăugat.</p>
         ) : (
-          <ul className="list-none m-0 p-0 min-w-[480px]">
+          <ul className="list-none m-0 p-0">
             {services.map((s, i) => (
               <li
                 key={s.id}
-                className={`flex items-center gap-3 px-4 py-3.5 ${i !== services.length - 1 ? 'border-b border-white/30' : ''}`}
+                className={`flex items-start gap-3 px-4 py-3.5 ${i !== services.length - 1 ? 'border-b border-white/30' : ''}`}
               >
                 {/* Reorder buttons */}
-                <div className="flex flex-col gap-0.5 shrink-0">
+                <div className="flex flex-col gap-0.5 shrink-0 mt-0.5">
                   <button
                     onClick={() => reorder(i, 'up')}
                     disabled={i === 0}
@@ -267,10 +267,10 @@ export function ServicesTab() {
                 </div>
 
                 {/* Name + details */}
-                <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                <div className="flex flex-col gap-0.5 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-[#1d1d1f]">{s.name}</span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                    <span className={`hidden sm:inline text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                       s.service_type === 'extra'
                         ? 'bg-[#5e5ce6]/15 text-[#3634a3]'
                         : 'bg-[#34c759]/15 text-[#1a6b2e]'
@@ -279,35 +279,44 @@ export function ServicesTab() {
                     </span>
                   </div>
                   {s.description && <span className="text-xs text-[#6e6e73]">{s.description}</span>}
-                  <span className="text-xs text-[#6e6e73]/60">{s.duration_minutes} min</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[#6e6e73]/60">{s.duration_minutes} min</span>
+                    <span className={`sm:hidden text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                      s.service_type === 'extra'
+                        ? 'bg-[#5e5ce6]/15 text-[#3634a3]'
+                        : 'bg-[#34c759]/15 text-[#1a6b2e]'
+                    }`}>
+                      {s.service_type === 'extra' ? 'extra' : 'principal'}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Price */}
-                <span className="text-sm font-semibold text-[#1d1d1f] shrink-0 w-24 text-center">
-                  {s.price != null ? `${s.price} RON` : '—'}
-                </span>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => openEdit(s)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-[#34c759] hover:bg-white/50 bg-transparent border-none cursor-pointer transition-all"
-                    aria-label="Editează"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setPendingDelete({ id: s.id, name: s.name })}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-red-400 hover:bg-red-50/50 bg-transparent border-none cursor-pointer transition-all"
-                    aria-label="Șterge"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 3.5h10M5.5 3.5V2.5h3v1M5 6l.5 5M9 6l-.5 5" />
-                      <rect x="3" y="3.5" width="8" height="9" rx="1.5" />
-                    </svg>
-                  </button>
+                {/* Price + Actions */}
+                <div className="ml-auto shrink-0 flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-1">
+                  <span className="text-sm font-semibold text-[#1d1d1f] w-20 text-right sm:text-center">
+                    {s.price != null ? `${s.price} RON` : '—'}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEdit(s)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-[#34c759] hover:bg-white/50 bg-transparent border-none cursor-pointer transition-all"
+                      aria-label="Editează"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setPendingDelete({ id: s.id, name: s.name })}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-red-400 hover:bg-red-50/50 bg-transparent border-none cursor-pointer transition-all"
+                      aria-label="Șterge"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 3.5h10M5.5 3.5V2.5h3v1M5 6l.5 5M9 6l-.5 5" />
+                        <rect x="3" y="3.5" width="8" height="9" rx="1.5" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

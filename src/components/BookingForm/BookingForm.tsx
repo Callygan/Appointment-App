@@ -94,11 +94,11 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
     const apptId = apptData.id
 
-    // Auto-confirm
-    await supabase
-      .from('appointments')
-      .update({ status: 'confirmed' })
-      .eq('id', apptId)
+    // Auto-confirm — dezactivat: book_slot inserează direct cu status='confirmed'
+    // await supabase
+    //   .from('appointments')
+    //   .update({ status: 'confirmed' })
+    //   .eq('id', apptId)
 
     if (instagram.trim()) {
       await supabase

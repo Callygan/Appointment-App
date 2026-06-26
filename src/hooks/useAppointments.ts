@@ -14,7 +14,7 @@ export function useAppointments() {
       .select(`
         *,
         available_slots ( date, start_time, end_time ),
-        services ( name )
+        services ( name, price )
       `)
       .order('created_at', { ascending: false })
 

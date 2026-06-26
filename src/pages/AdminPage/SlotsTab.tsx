@@ -130,8 +130,13 @@ export function SlotsTab() {
         {tab === 'single' && (
           <form className="flex flex-col gap-4" onSubmit={handleSingleSubmit}>
             <div className="grid grid-cols-2 gap-3">
-              <label className={labelCls} onClick={openPicker}>Data<input lang="en-GB" type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={inputCls} /></label>
-              <label className={labelCls} onClick={openPicker}>Ora<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={inputCls} /></label>
+              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Data
+                <div className="relative">
+                  <input lang="en-GB" type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={inputCls} />
+                  {!sDate && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
+                </div>
+              </label>
+              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Ora<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={inputCls} /></label>
             </div>
             <label className={labelCls}>Durata
               {(() => {
@@ -152,12 +157,22 @@ export function SlotsTab() {
         {tab === 'bulk' && (
           <form className="flex flex-col gap-4" onSubmit={handleBulkSubmit}>
             <div className="grid grid-cols-2 gap-3">
-              <label className={labelCls} onClick={openPicker}>De la data<input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={inputCls} /></label>
-              <label className={labelCls} onClick={openPicker}>Pana la data<input lang="en-GB" type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={bFrom || localDateStr(today)} className={inputCls} /></label>
+              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>De la data
+                <div className="relative">
+                  <input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={inputCls} />
+                  {!bFrom && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
+                </div>
+              </label>
+              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Pana la data
+                <div className="relative">
+                  <input lang="en-GB" type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={bFrom || localDateStr(today)} className={inputCls} />
+                  {!bTo && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
+                </div>
+              </label>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <label className={labelCls} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={inputCls} /></label>
-              <label className={labelCls} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={inputCls} /></label>
+              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={inputCls} /></label>
+              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={inputCls} /></label>
             </div>
             <label className={labelCls}>Durata slotului
               {(() => {

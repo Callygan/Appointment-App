@@ -86,7 +86,9 @@ export function AppointmentsTab() {
           : <AppointmentTable items={upcoming} onRequestCancel={setPendingCancel} showCancel />}
       </Section>
 
-      <Section title={`Trecute (${past.length})`} color="info">
+      <Section title={`Trecute (${past.length})`} color="info" action={
+        past.length > 0 ? <ExportButton items={past} /> : undefined
+      }>
         {past.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări trecute.</p>
           : <AppointmentTable items={past} onRequestCancel={setPendingCancel} showCancel={false} />}
@@ -119,13 +121,16 @@ const SECTION_COLORS = {
   danger:  { title: 'text-red-400',   ring: 'ring-1 ring-red-300/40' },
 }
 
-function Section({ title, children, color }: { title: string; children: React.ReactNode; color?: keyof typeof SECTION_COLORS }) {
+function Section({ title, children, color, action }: { title: string; children: React.ReactNode; color?: keyof typeof SECTION_COLORS; action?: React.ReactNode }) {
   const c = color ? SECTION_COLORS[color] : null
   return (
     <section className="mb-8">
-      <h2 className={`text-xs font-semibold uppercase tracking-wider mb-3 px-1 ${c ? c.title : 'text-[#6e6e73]'}`}>
-        {title}
-      </h2>
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h2 className={`text-xs font-semibold uppercase tracking-wider ${c ? c.title : 'text-[#6e6e73]'}`}>
+          {title}
+        </h2>
+        {action}
+      </div>
       <div className={`glass rounded-2xl overflow-hidden ${c ? c.ring : ''}`}>
         {children}
       </div>
@@ -262,5 +267,62 @@ function AppointmentTable({ items, onRequestCancel, onConfirm, showCancel, showC
         </tbody>
       </table>
     </div>
+  )
+}
+
+function ExportButton({ items }: { items: ReturnType<typeof useAppointments>['appointments'] }) {
+  function handleExport() {
+    const BOM = '\uFEFF'
+    const headers = ['Nr. programare', 'Data', 'Serviciu', 'Client', 'Telefon', 'Pret (RON)']
+
+    function toRoDate(iso: string): string {
+      const [y, m, d] = iso.split('-')
+      return `${d}.${m}.${y}`
+    }
+
+    const rows = [...items]
+      .sort((a, b) => {
+        const da = a.available_slots?.date ?? a.appointment_date ?? ''
+        const db = b.available_slots?.date ?? b.appointment_date ?? ''
+        return da.localeCompare(db)
+      })
+      .map(a => {
+        const date = a.available_slots?.date ?? a.appointment_date ?? ''
+        return [
+          `#${a.booking_number}`,
+          date ? toRoDate(date) : '',
+          a.services?.name ?? '',
+          a.client_name,
+          a.client_phone,
+          a.services?.price != null ? String(a.services.price) : '',
+        ]
+      })
+
+    const csv = BOM + [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `programari_trecute_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <button
+      onClick={handleExport}
+      title="Exportă în Excel"
+      className="flex items-center gap-1.5 text-xs text-[#5e5ce6] hover:text-[#3634a3] glass rounded-full px-3 py-1.5 border-none cursor-pointer transition-all hover:scale-105"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export
+    </button>
   )
 }

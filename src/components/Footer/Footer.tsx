@@ -29,7 +29,7 @@ export function Footer() {
               >
                 nail<span className="font-black">bar</span>
               </span>
-              <span className="text-[7px] font-medium tracking-[0.3em] uppercase text-[#b0b0b8] group-hover:text-[#a855f7] transition-colors duration-300">by Daniela Cobosnean</span>
+              {/* <span className="text-[7px] font-medium tracking-[0.3em] uppercase text-[#b0b0b8] group-hover:text-[#a855f7] transition-colors duration-300">by Daniela Cobosnean</span> */}
             </div>
           </a>
         </div>
