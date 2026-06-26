@@ -36,15 +36,41 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 html, body {
   min-height: 100%;
+  background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%);
+  background-attachment: fixed;
 }
 
 body {
   margin: 0;
   padding: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   color: #1d1d1f;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Previne zoom automat iOS Safari la focus pe input (declanșat de font-size < 16px) */
+input, select, textarea {
+  font-size: max(16px, 1em);
+}
+
+/* Placeholder custom pentru date inputs — vizibil doar pe Safari iOS (nu pe Chrome/Firefox care afișează propria valoare) */
+input[type="date"]:not(:invalid) ~ .date-placeholder,
+input[type="date"][value=""] ~ .date-placeholder {
+  display: flex;
+}
+/* Pe Chrome/Firefox input[type=date] are mereu :invalid false și arată valoarea proprie — ascundem placeholder-ul nostru */
+@supports not (-webkit-touch-callout: none) {
+  .date-placeholder {
+    display: none !important;
+  }
 }
