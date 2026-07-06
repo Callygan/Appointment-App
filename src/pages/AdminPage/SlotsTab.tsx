@@ -139,7 +139,7 @@ export function SlotsTab() {
 
   return (
     <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 items-start w-full overflow-x-hidden">
-      <div className="glass rounded-3xl p-4 sm:p-6 w-full xl:w-[500px] xl:shrink-0 overflow-hidden min-w-0">
+      <div className="glass rounded-3xl p-4 sm:p-6 w-full xl:w-[500px] xl:shrink-0 min-w-0">
         <div className="relative flex bg-white/30 rounded-xl p-1 mb-4 sm:mb-5">
           <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-white/80 shadow-sm pointer-events-none" style={{ transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)', transform: tab === 'bulk' ? 'translateX(calc(100% + 8px))' : 'translateX(0)' }} />
           <button type="button" onClick={() => { setTab('single'); setMessage(null) }} className={`relative z-10 flex-1 rounded-lg px-2 py-2 text-xs sm:text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'single' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>Slot individual</button>
