@@ -148,15 +148,20 @@ export function SlotsTab() {
         {tab === 'single' && (
           <form className="flex min-w-0 w-full flex-col gap-3 sm:gap-4" onSubmit={handleSingleSubmit}>
             <div className="grid min-w-0 grid-cols-1 gap-2 sm:gap-3 sm:grid-cols-2">
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Data
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
+                <span className="flex items-center gap-1 pl-2">Data</span>
                 <div className="relative">
                   <input lang="en-GB" type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={compactInputCls} />
                   {!sDate && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-xs sm:text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={compactInputCls} /></label>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
+                <span className="flex items-center gap-1 pl-2">Ora</span>
+                <input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={compactInputCls} />
+              </label>
             </div>
-            <label className={labelCls}>Durata
+            <label className={labelCls}>
+              <span className="flex items-center gap-1 pl-2">Durata</span>
               {(() => {
                 const opts = [{ value: 30, label: '30 min' }, { value: 60, label: '1h' }, { value: 90, label: '1.5h' }, { value: 120, label: '2h' }]
                 const idx = opts.findIndex((o) => o.value === sDuration)
@@ -175,13 +180,15 @@ export function SlotsTab() {
         {tab === 'bulk' && (
           <form className="flex min-w-0 w-full flex-col gap-3 sm:gap-4" onSubmit={handleBulkSubmit}>
             <div className="grid min-w-0 grid-cols-1 gap-2 sm:gap-3 sm:grid-cols-2">
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>De la data
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
+                <span className="flex items-center gap-1 pl-2">De la data</span>
                 <div className="relative">
                   <input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={compactInputCls} />
                   {!bFrom && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-xs sm:text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Pana la data
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
+                <span className="flex items-center gap-1 pl-2">Pana la data</span>
                 <div className="relative">
                   <input lang="en-GB" type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={bFrom || localDateStr(today)} className={compactInputCls} />
                   {!bTo && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-xs sm:text-sm text-[#aaa] pointer-events-none">Alege data</span>}
@@ -189,10 +196,17 @@ export function SlotsTab() {
               </label>
             </div>
             <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={compactInputCls} /></label>
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={compactInputCls} /></label>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
+                <span className="flex items-center gap-1 pl-2">Ora start</span>
+                <input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={compactInputCls} />
+              </label>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
+                <span className="flex items-center gap-1 pl-2">Ora sfarsit</span>
+                <input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={compactInputCls} />
+              </label>
             </div>
-            <label className={labelCls}>Durata slotului
+            <label className={labelCls}>
+              <span className="flex items-center gap-1 pl-2">Durata slotului</span>
               {(() => {
                 const opts = [{ value: 30, label: '30 min' }, { value: 60, label: '1h' }, { value: 90, label: '1.5h' }, { value: 120, label: '2h' }]
                 const idx = opts.findIndex((o) => o.value === bDuration)
