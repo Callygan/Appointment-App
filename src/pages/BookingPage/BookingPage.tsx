@@ -86,6 +86,8 @@ export function BookingPage() {
               date={selectedDate}
               slots={slotsForDay}
               onBook={setBookingSlot}
+              afterHoursFrom={18}
+              afterHoursLabel="+40 RON în afara programului"
             />
           </div>
         )}

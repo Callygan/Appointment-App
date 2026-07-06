@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { labelCls } from '../../components/ui/formStyles'
 import { STATUS_COLOR, STATUS_LABELS, type AppointmentStatus } from '../../utils/statusColors'
@@ -35,6 +35,7 @@ export function MyAppointmentPage() {
   const [cancelled, setCancelled] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [nowTs, setNowTs] = useState(() => Date.now())
 
   const MAX_ATTEMPTS = 5
   const LOCKOUT_MS = 3 * 60 * 1000 // 3 minute
@@ -52,9 +53,14 @@ export function MyAppointmentPage() {
     localStorage.setItem(LS_KEY, JSON.stringify({ attempts, lockedUntil }))
   }
 
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTs(Date.now()), 30000)
+    return () => window.clearInterval(id)
+  }, [])
+
   const lock = readLock()
-  const isLocked = lock.lockedUntil !== null && Date.now() < lock.lockedUntil
-  const lockMinutesLeft = isLocked ? Math.ceil((lock.lockedUntil! - Date.now()) / 60000) : 0
+  const isLocked = lock.lockedUntil !== null && nowTs < lock.lockedUntil
+  const lockMinutesLeft = isLocked ? Math.ceil((lock.lockedUntil! - nowTs) / 60000) : 0
   const attempts = lock.attempts
 
   async function handleSearch(e: React.FormEvent) {

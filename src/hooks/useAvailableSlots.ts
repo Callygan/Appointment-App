@@ -15,8 +15,10 @@ export function useAvailableSlots(year: number, month: number) {
     const lastDay = new Date(year, month, 0).getDate()
     const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 
-    setLoading(true)
-    setError(null)
+    queueMicrotask(() => {
+      setLoading(true)
+      setError(null)
+    })
 
     supabase
       .from('available_slots')

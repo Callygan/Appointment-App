@@ -32,7 +32,7 @@ export function Header() {
           onClick={() => setMenuOpen(false)}
         />
       )}
-      <nav className="glass rounded-2xl px-4 py-2.5 w-full max-w-4xl flex items-center justify-between">
+      <nav className="glass glass-header rounded-2xl px-4 py-2.5 w-full max-w-4xl flex items-center justify-between">
         <Link to="/" className="flex items-center pl-2 gap-3 no-underline group select-none">
           {/* Wordmark */}
           <div className="flex flex-col leading-none gap-[3px]">

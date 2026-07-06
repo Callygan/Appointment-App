@@ -9,7 +9,7 @@ export function validateName(name: string): string | null {
 
 export function validateEmail(email: string): string | null {
   // local part cannot start or end with dot, no consecutive dots, valid domain
-  const re = /^[a-zA-Z0-9]([a-zA-Z0-9._%+\-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/
+  const re = /^[a-zA-Z0-9]([a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/
   if (!email.trim()) return 'Adresa de email este obligatorie.'
   if (!re.test(email.trim())) return 'Adresa de email nu este validă.'
   return null

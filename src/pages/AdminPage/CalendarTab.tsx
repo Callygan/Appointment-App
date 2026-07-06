@@ -3,6 +3,7 @@ import { useAppointments } from '../../hooks/useAppointments'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { STATUS_COLOR, STATUS_LABELS } from '../../utils/statusColors'
 import { Spinner } from '../../components/ui/Spinner'
+import { EditAppointmentModal } from '../../components/ui/EditAppointmentModal'
 import type { Appointment } from '../../types'
 
 type View = 'month' | 'week' | 'day'
@@ -59,10 +60,11 @@ function apptDurationMins(a: Appointment): number {
 }
 
 export function CalendarTab() {
-  const { appointments, loading } = useAppointments()
+  const { appointments, loading, updateAppointmentSchedule } = useAppointments()
   const [view, setView] = useState<View>('month')
   const [current, setCurrent] = useState(new Date())
   const [selected, setSelected] = useState<Appointment | null>(null)
+  const [editing, setEditing] = useState<Appointment | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerNav, setPickerNav] = useState(new Date())
   const pickerRef = useRef<HTMLDivElement>(null)
@@ -112,7 +114,7 @@ export function CalendarTab() {
   }, [view, current])
 
   // ── chip component ───────────────────────────────────────────
-  function Chip({ a, showTime }: { a: Appointment; showTime?: boolean }) {
+  function renderChip(a: Appointment, showTime?: boolean) {
     const c = STATUS_COLOR[a.status]
     return (
       <button
@@ -125,7 +127,7 @@ export function CalendarTab() {
   }
 
   // ── MONTH view ───────────────────────────────────────────────
-  function MonthView() {
+  function renderMonthView() {
     const grid = buildMonthGrid(current.getFullYear(), current.getMonth())
     return (
       <div className="flex flex-col gap-0">
@@ -154,7 +156,7 @@ export function CalendarTab() {
                   {day.getDate()}
                 </span>
                 <div className="flex flex-col gap-0.5">
-                  {appts.slice(0, 3).map(a => <Chip key={a.id} a={a} showTime />)}
+                  {appts.slice(0, 3).map(a => <span key={a.id}>{renderChip(a, true)}</span>)}
                   {appts.length > 3 && (
                     <span className="text-[10px] text-[#6e6e73] px-1">+{appts.length - 3} mai mult</span>
                   )}
@@ -168,7 +170,7 @@ export function CalendarTab() {
   }
 
   // ── WEEK view ────────────────────────────────────────────────
-  function WeekView() {
+  function renderWeekView() {
     const days = getWeekDays(current)
     const totalH = HOURS.length * ROW_H
     return (
@@ -242,7 +244,7 @@ export function CalendarTab() {
   }
 
   // ── DAY view ─────────────────────────────────────────────────
-  function DayView() {
+  function renderDayView() {
     const ds = getDateStr(current)
     const appts = byDate[ds] ?? []
     const totalH = HOURS.length * ROW_H
@@ -466,9 +468,9 @@ export function CalendarTab() {
           </div>
         ) : (
           <>
-            {view === 'month' && <MonthView />}
-            {view === 'week' && <WeekView />}
-            {view === 'day' && <DayView />}
+            {view === 'month' && renderMonthView()}
+            {view === 'week' && renderWeekView()}
+            {view === 'day' && renderDayView()}
           </>
         )}
       </div>
@@ -482,6 +484,9 @@ export function CalendarTab() {
             style={{ animation: 'slideDown 0.3s cubic-bezier(0.4,0,0.2,1)' }}
             onClick={e => e.stopPropagation()}
           >
+            <button onClick={() => { setEditing(selected); setSelected(null) }} className="absolute top-4 right-12 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:text-[#34c759] hover:bg-black/15 transition-colors" aria-label="Editează data și ora" title="Editează data și ora">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
+            </button>
             <button onClick={() => setSelected(null)} className="absolute top-4 right-4 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:bg-black/15 transition-colors">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -560,6 +565,18 @@ export function CalendarTab() {
             </div>
           </div>
         </div>
+      )}
+
+      {editing && (
+        <EditAppointmentModal
+          appointment={editing}
+          onDismiss={() => setEditing(null)}
+          onSave={async (slotId) => {
+            const err = await updateAppointmentSchedule(editing.id, slotId)
+            if (!err) setSelected(null)
+            return err
+          }}
+        />
       )}
     </div>
   )

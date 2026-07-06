@@ -14,14 +14,19 @@ export function useAdminSlots(year: number, month: number) {
     const from = `${year}-${String(month).padStart(2, '0')}-01`
     const lastDay = new Date(year, month, 0).getDate()
     const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    const effectiveFrom = from < todayStr ? todayStr : from
 
-    setLoading(true)
-    setError(null)
+    queueMicrotask(() => {
+      setLoading(true)
+      setError(null)
+    })
 
     supabase
       .from('available_slots')
       .select('*')
-      .gte('date', from)
+      .gte('date', effectiveFrom)
       .lte('date', to)
       .order('date')
       .order('start_time')

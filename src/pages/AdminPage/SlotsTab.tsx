@@ -42,8 +42,17 @@ function generateTimeSlots(startTime: string, endTime: string, durationMinutes: 
   return slots
 }
 
+function toMinutes(hhmmOrHhmmss: string): number {
+  const [h = '0', m = '0'] = hhmmOrHhmmss.split(':')
+  return Number(h) * 60 + Number(m)
+}
+
 function overlaps(s1: string, e1: string, s2: string, e2: string): boolean {
-  return s1 < e2 && s2 < e1
+  const aStart = toMinutes(s1)
+  const aEnd = toMinutes(e1)
+  const bStart = toMinutes(s2)
+  const bEnd = toMinutes(e2)
+  return aStart < bEnd && bStart < aEnd
 }
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sam', 'Dum']
@@ -70,6 +79,7 @@ export function SlotsTab() {
   const { slots: adminSlots, datesWithSlots: adminDates, loading: adminLoading, deleteSlot, refresh: adminRefresh } = useAdminSlots(adminYear, adminMonth)
 
   const inputCls = `${adminInputCls} cursor-pointer`
+  const compactInputCls = `${inputCls} py-2`
   const labelCls = `${baseLabelCls} cursor-pointer`
   const openPicker = (e: React.MouseEvent<HTMLLabelElement>) => {
     const input = e.currentTarget.querySelector('input') as HTMLInputElement | null
@@ -85,6 +95,10 @@ export function SlotsTab() {
     e.preventDefault()
     const [sh, sm] = sStart.split(':').map(Number)
     const endTotal = sh * 60 + sm + sDuration
+    if (endTotal > 24 * 60) {
+      setMessage({ type: 'error', text: 'Intervalul selectat depaseste ora 24:00. Alege o ora/durata mai mica.' })
+      return
+    }
     const sEnd = `${String(Math.floor(endTotal / 60)).padStart(2, '0')}:${String(endTotal % 60).padStart(2, '0')}`
     setSaving(true); setMessage(null)
     const { data: existing } = await supabase.from('available_slots').select('start_time, end_time').eq('date', sDate)
@@ -108,12 +122,16 @@ export function SlotsTab() {
     if (dates.length === 0 || timeSlots.length === 0) { setMessage({ type: 'error', text: 'Nu s-au generat sloturi. Verifica setarile.' }); setSaving(false); return }
     const { data: existing } = await supabase.from('available_slots').select('date, start_time, end_time').gte('date', bFrom).lte('date', bTo)
     const allRows = dates.flatMap((date) => timeSlots.map(({ start_time, end_time }) => ({ date, start_time, end_time })))
-    const newRows = allRows.filter(row => !existing?.some(s => s.date === row.date && overlaps(row.start_time, row.end_time, s.start_time, s.end_time)))
-    if (newRows.length === 0) { setMessage({ type: 'error', text: 'Toate sloturile exista deja sau se suprapun.' }); setSaving(false); return }
+    const overlappingRows = allRows.filter(row => existing?.some(s => s.date === row.date && overlaps(row.start_time, row.end_time, s.start_time, s.end_time)))
+    if (overlappingRows.length > 0) {
+      setMessage({ type: 'error', text: 'Exista deja sloturi care se suprapun pe data si ora selectate. Ajusteaza intervalul.' })
+      setSaving(false)
+      return
+    }
+    const newRows = allRows
     const { error } = await supabase.from('available_slots').insert(newRows)
     if (import.meta.env.DEV && error) console.error('insertBulkSlots error:', error)
-    const skipped = allRows.length - newRows.length
-    setMessage(error ? { type: 'error', text: 'Nu s-au putut adăuga sloturile. Încearcă din nou.' } : { type: 'success', text: `${newRows.length} slot(uri) adaugate in ${dates.length} zi(le).${skipped > 0 ? ` (${skipped} sarite, existau deja)` : ''}` })
+    setMessage(error ? { type: 'error', text: 'Nu s-au putut adăuga sloturile. Încearcă din nou.' } : { type: 'success', text: `${newRows.length} slot(uri) adaugate in ${dates.length} zi(le).` })
     adminRefresh(); setSaving(false)
   }
 
@@ -129,14 +147,14 @@ export function SlotsTab() {
         </div>
         {tab === 'single' && (
           <form className="flex flex-col gap-4" onSubmit={handleSingleSubmit}>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Data
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Data
                 <div className="relative">
-                  <input lang="en-GB" type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={inputCls} />
+                  <input lang="en-GB" type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={compactInputCls} />
                   {!sDate && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
-              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Ora<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={inputCls} /></label>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={compactInputCls} /></label>
             </div>
             <label className={labelCls}>Durata
               {(() => {
@@ -156,23 +174,23 @@ export function SlotsTab() {
         )}
         {tab === 'bulk' && (
           <form className="flex flex-col gap-4" onSubmit={handleBulkSubmit}>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>De la data
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>De la data
                 <div className="relative">
-                  <input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={inputCls} />
+                  <input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={compactInputCls} />
                   {!bFrom && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
-              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Pana la data
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Pana la data
                 <div className="relative">
-                  <input lang="en-GB" type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={bFrom || localDateStr(today)} className={inputCls} />
+                  <input lang="en-GB" type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={bFrom || localDateStr(today)} className={compactInputCls} />
                   {!bTo && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={inputCls} /></label>
-              <label className={`${labelCls} min-w-0 overflow-hidden`} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={inputCls} /></label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={compactInputCls} /></label>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={compactInputCls} /></label>
             </div>
             <label className={labelCls}>Durata slotului
               {(() => {
@@ -209,7 +227,8 @@ export function SlotsTab() {
           <MonthCalendar year={adminYear} month={adminMonth} datesWithSlots={adminDates} selectedDate={adminSelectedDate} onDaySelect={setAdminSelectedDate}
             onPrev={() => { if (adminMonth === 1) { setAdminYear(y => y - 1); setAdminMonth(12) } else setAdminMonth(m => m - 1); setAdminSelectedDate(null) }}
             onNext={() => { if (adminMonth === 12) { setAdminYear(y => y + 1); setAdminMonth(1) } else setAdminMonth(m => m + 1); setAdminSelectedDate(null) }}
-            allowPast />
+            disablePrev={adminYear === today.getFullYear() && adminMonth === today.getMonth() + 1}
+            />
         </div>
         {adminSelectedDate && (
           <div className="glass rounded-3xl overflow-hidden">

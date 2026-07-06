@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useAppointments } from '../../hooks/useAppointments'
 import { getDateStr, formatDate, formatTime } from '../../utils/dateUtils'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
+import { EditAppointmentModal } from '../../components/ui/EditAppointmentModal'
 
 export function AppointmentsTab() {
-  const { appointments, loading, error, confirmAppointment, cancelAppointment } = useAppointments()
+  const { appointments, loading, error, confirmAppointment, cancelAppointment, updateAppointmentSchedule } = useAppointments()
   const [pendingCancel, setPendingCancel] = useState<{ id: string; slotId: string; name: string } | null>(null)
+  const [editing, setEditing] = useState<(typeof appointments)[number] | null>(null)
   const [search, setSearch] = useState('')
 
   const today = getDateStr(new Date())
@@ -76,14 +78,14 @@ export function AppointmentsTab() {
       </div>
       {pending.length > 0 && (
         <Section title={`În așteptare (${pending.length})`} color="warning">
-          <AppointmentTable items={pending} onRequestCancel={setPendingCancel} onConfirm={confirmAppointment} showCancel showConfirm />
+          <AppointmentTable items={pending} onRequestCancel={setPendingCancel} onConfirm={confirmAppointment} onEdit={setEditing} showCancel showConfirm />
         </Section>
       )}
 
       <Section title={`Viitoare (${upcoming.length})`} color="success">
         {upcoming.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări viitoare.</p>
-          : <AppointmentTable items={upcoming} onRequestCancel={setPendingCancel} showCancel />}
+          : <AppointmentTable items={upcoming} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel />}
       </Section>
 
       <Section title={`Trecute (${past.length})`} color="info" action={
@@ -91,13 +93,13 @@ export function AppointmentsTab() {
       }>
         {past.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări trecute.</p>
-          : <AppointmentTable items={past} onRequestCancel={setPendingCancel} showCancel={false} />}
+          : <AppointmentTable items={past} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} />}
       </Section>
 
       <Section title={`Anulate (${cancelled.length})`} color="danger">
         {cancelled.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări anulate.</p>
-          : <AppointmentTable items={cancelled} onRequestCancel={setPendingCancel} showCancel={false} />}
+          : <AppointmentTable items={cancelled} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} />}
       </Section>
 
       {pendingCancel && (
@@ -108,6 +110,14 @@ export function AppointmentsTab() {
           cancelLabel="Înapoi"
           onConfirm={() => { cancelAppointment(pendingCancel.id, pendingCancel.slotId); setPendingCancel(null) }}
           onDismiss={() => setPendingCancel(null)}
+        />
+      )}
+
+      {editing && (
+        <EditAppointmentModal
+          appointment={editing}
+          onDismiss={() => setEditing(null)}
+          onSave={(slotId) => updateAppointmentSchedule(editing.id, slotId)}
         />
       )}
     </>
@@ -141,6 +151,7 @@ function Section({ title, children, color, action }: { title: string; children: 
 interface TableProps {
   items: ReturnType<typeof useAppointments>['appointments']
   onRequestCancel: (info: { id: string; slotId: string; name: string }) => void
+  onEdit: (appointment: ReturnType<typeof useAppointments>['appointments'][number]) => void
   onConfirm?: (id: string) => void
   showCancel: boolean
   showConfirm?: boolean
@@ -149,7 +160,7 @@ interface TableProps {
 type SortKey = 'booking_number' | 'date' | 'time' | 'client_name' | 'service'
 type SortDir = 'asc' | 'desc'
 
-function AppointmentTable({ items, onRequestCancel, onConfirm, showCancel, showConfirm }: TableProps) {
+function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCancel, showConfirm }: TableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -173,7 +184,7 @@ function AppointmentTable({ items, onRequestCancel, onConfirm, showCancel, showC
     return sortDir === 'asc' ? cmp : -cmp
   })
 
-  const hasActions = showCancel || showConfirm
+  const hasActions = true
 
   const COLS: { label: string; key?: SortKey }[] = [
     { label: 'Nr.', key: 'booking_number' },
@@ -240,28 +251,36 @@ function AppointmentTable({ items, onRequestCancel, onConfirm, showCancel, showC
                   : <span className="text-[#6e6e73]/40">—</span>}
               </td>
               <td className="px-4 py-3 text-[#1d1d1f]">{a.services?.name ?? <span className="text-[#6e6e73]/40">—</span>}</td>
-              {(showCancel || showConfirm) && (
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    {showConfirm && (
-                      <button
-                        onClick={() => onConfirm?.(a.id)}
-                        className="rounded-full px-3 py-1 text-xs text-[#34c759] cursor-pointer hover:bg-[#34c759]/10 transition-all border border-[#34c759]/40 bg-white/30 hover:scale-105"
-                      >
-                        Confirmă
-                      </button>
-                    )}
-                    {showCancel && (
-                      <button
-                        onClick={() => onRequestCancel({ id: a.id, slotId: a.slot_id, name: a.client_name })}
-                        className="rounded-full px-3 py-1 text-xs text-white bg-red-500 hover:bg-red-600 cursor-pointer transition-all border-none shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:scale-105"
-                      >
-                        Anulează
-                      </button>
-                    )}
-                  </div>
-                </td>
-              )}
+              <td className="px-4 py-3">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onEdit(a)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-[#34c759] hover:bg-white/50 bg-transparent border-none cursor-pointer transition-all"
+                    aria-label="Editează data și ora"
+                    title="Editează data și ora"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" />
+                    </svg>
+                  </button>
+                  {showConfirm && (
+                    <button
+                      onClick={() => onConfirm?.(a.id)}
+                      className="rounded-full px-3 py-1 text-xs text-[#34c759] cursor-pointer hover:bg-[#34c759]/10 transition-all border border-[#34c759]/40 bg-white/30 hover:scale-105"
+                    >
+                      Confirmă
+                    </button>
+                  )}
+                  {showCancel && (
+                    <button
+                      onClick={() => onRequestCancel({ id: a.id, slotId: a.slot_id, name: a.client_name })}
+                      className="rounded-full px-3 py-1 text-xs text-white bg-red-500 hover:bg-red-600 cursor-pointer transition-all border-none shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:scale-105"
+                    >
+                      Anulează
+                    </button>
+                  )}
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -88,7 +88,10 @@ export function ServicesTab() {
       .eq('service_id', id)
       .in('status', ['pending', 'confirmed'])
 
-    const hasFutureActive = (activeAppts ?? []).some((a: { appointment_date: any; available_slots: any }) => {
+    const hasFutureActive = (activeAppts ?? []).some((a: {
+      appointment_date: string | null
+      available_slots: { date: string } | Array<{ date: string }> | null
+    }) => {
       const slots = a.available_slots
       const slotDate = Array.isArray(slots) ? slots[0]?.date : slots?.date
       const date = slotDate ?? a.appointment_date ?? null

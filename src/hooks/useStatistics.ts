@@ -233,8 +233,11 @@ export function useStatistics(from: string, to: string) {
 
   useEffect(() => {
     if (!from || !to) return
-    setLoading(true)
-    setError(null)
+
+    queueMicrotask(() => {
+      setLoading(true)
+      setError(null)
+    })
 
     supabase
       .from('appointments')

@@ -144,8 +144,8 @@ export function StatisticsTab() {
 
         {/* Custom date pickers */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
-          <span className="text-xs text-[#6e6e73] shrink-0">Interval custom:</span>
-          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+          <span className="text-xs text-[#6e6e73] shrink-0 w-full text-center sm:w-auto sm:text-left">Interval custom:</span>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 w-full sm:w-auto sm:min-w-[320px]">
             <div className="relative min-w-0">
               <input
                 lang="en-GB"
@@ -174,7 +174,7 @@ export function StatisticsTab() {
             </div>
           </div>
           {isCustomActive && (
-            <span className="text-xs text-[#34c759] font-medium">
+            <span className="text-xs text-[#34c759] font-medium w-full text-center sm:w-auto sm:text-left">
               {inputToDisplay(customFrom)} – {inputToDisplay(customTo)}
             </span>
           )}
