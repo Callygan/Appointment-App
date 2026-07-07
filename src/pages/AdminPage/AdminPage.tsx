@@ -91,7 +91,7 @@ export function AdminPage() {
           <button
             onClick={() => setMenuOpen(o => !o)}
             aria-label={menuOpen ? 'Închide meniu' : 'Deschide meniu'}
-            className="glass glass-menu rounded-2xl px-4 h-12 flex items-center justify-between w-full border-none cursor-pointer"
+            className="glass-menu rounded-2xl px-4 h-12 flex items-center justify-between w-full border-none cursor-pointer"
           >
             <div className="flex items-center gap-2.5 text-sm font-semibold text-[#1d1d1f]">
               <TabIcon id={tab} />
@@ -106,7 +106,7 @@ export function AdminPage() {
 
           {/* dropdown */}
           <div
-            className="absolute top-[calc(100%+8px)] left-0 right-0 glass glass-menu rounded-2xl py-2 overflow-hidden"
+            className="absolute top-[calc(100%+8px)] left-0 right-0 glass-menu rounded-2xl py-2 overflow-hidden"
             style={{
               opacity: menuOpen ? 1 : 0,
               transform: menuOpen ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.97)',
@@ -136,7 +136,7 @@ export function AdminPage() {
 
         <div className="flex flex-col md:flex-row gap-4 items-start max-w-screen-2xl mx-auto">
           {/* ── Desktop sidebar ── */}
-          <aside className="hidden md:block glass glass-menu rounded-2xl p-2 w-48 shrink-0 sticky top-8 z-10">
+          <aside className="hidden md:block glass-menu rounded-2xl p-2 w-48 shrink-0 sticky top-8 z-10">
             <div className="relative flex flex-col gap-0.5">
               {/* sliding indicator */}
               <div
