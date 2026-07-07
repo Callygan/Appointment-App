@@ -63,15 +63,21 @@ html {
 
 html, body {
   min-height: 100%;
-  background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%);
-  background-attachment: fixed;
 }
 
-/* Chromium can render backdrop-filter over fixed page backgrounds too transparent. */
-@supports not (-webkit-touch-callout: none) {
-  html, body {
-    background-attachment: scroll;
-  }
+html {
+  background-color: #e8d5ff;
+}
+
+/* Fixed gradient as a real positioned layer (not background-attachment: fixed),
+   so backdrop-filter blurs it correctly on Chromium without transparency artifacts. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%);
+  pointer-events: none;
 }
 
 body {
