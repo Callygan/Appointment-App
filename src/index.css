@@ -25,18 +25,18 @@
 }
 
 @utility glass-header {
-  background: rgba(255, 255, 255, 0.74);
-  backdrop-filter: blur(42px) saturate(190%);
-  -webkit-backdrop-filter: blur(42px) saturate(190%);
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(56px) saturate(190%);
+  -webkit-backdrop-filter: blur(56px) saturate(190%);
 }
 
 @utility glass-menu {
-  /* Stronger base tint so Chromium still looks frosted, not transparent. */
-  background: rgba(255, 255, 255, 0.86);
+  /* Lower opacity so the blur is actually visible, but keep enough tint to stay frosted on Chromium. */
+  background: rgba(255, 255, 255, 0.66);
   border: 1px solid rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(36px) saturate(185%);
-  -webkit-backdrop-filter: blur(36px) saturate(185%);
+  backdrop-filter: blur(52px) saturate(185%);
+  -webkit-backdrop-filter: blur(52px) saturate(185%);
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
@@ -71,17 +71,6 @@ html, body {
 @supports not (-webkit-touch-callout: none) {
   html, body {
     background-attachment: scroll;
-  }
-
-  /* Chromium blurs weaker than Safari, so push the header/menu blur higher there. */
-  .glass-header {
-    backdrop-filter: blur(64px) saturate(190%);
-    -webkit-backdrop-filter: blur(64px) saturate(190%);
-  }
-
-  .glass-menu {
-    backdrop-filter: blur(56px) saturate(185%);
-    -webkit-backdrop-filter: blur(56px) saturate(185%);
   }
 }
 
