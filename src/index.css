@@ -30,6 +30,21 @@
   -webkit-backdrop-filter: blur(42px) saturate(190%);
 }
 
+@utility glass-menu {
+  /* Stronger base tint so Chromium still looks frosted, not transparent. */
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(36px) saturate(185%);
+  -webkit-backdrop-filter: blur(36px) saturate(185%);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass-menu {
+    background: rgba(255, 255, 255, 0.94);
+  }
+}
+
 @utility glass-heavy {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(48px) saturate(200%);
