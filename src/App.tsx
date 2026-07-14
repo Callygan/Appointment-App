@@ -34,6 +34,10 @@ function AppContent() {
     document.title = pageTitle ? `${pageTitle} - Nail Bar` : 'Nail Bar'
   }, [location.pathname])
 
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="fixed inset-0 -z-10" style={{ background: 'linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%)' }} />
