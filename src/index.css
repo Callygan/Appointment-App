@@ -62,7 +62,14 @@ html, body {
 }
 
 html {
+  /* Solid fallback + full-height gradient so iOS Safari fills the rubber-band
+     overscroll areas (top/bottom, outside the page) with the same gradient
+     instead of a flat color. The visible viewport is covered by the fixed
+     body::before layer; this html gradient only shows in the overscroll region.
+     No background-attachment: fixed (avoids the Chromium backdrop-filter bug). */
   background-color: #e8d5ff;
+  background-image: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%);
+  background-repeat: no-repeat;
 }
 
 /* Fixed gradient as a real positioned layer (not background-attachment: fixed),
