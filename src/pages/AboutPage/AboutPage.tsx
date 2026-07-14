@@ -59,7 +59,7 @@ export function AboutPage() {
         {/* Stats */}
         <div className="glass rounded-3xl px-6 py-6 grid grid-cols-2 gap-4 text-center">
           {[
-            { value: '7', label: 'Ani de activitate' },
+            { value: '7', label: 'ani de activitate' },
             { value: 'Sibiu', label: 'Calea Dumbrăvii' },
           ].map((s) => (
             <div key={s.label}>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getDateStr } from '../../utils/dateUtils'
-import { alertCls, adminInputCls, labelCls } from '../../components/ui/formStyles'
+import { adminInputCls, labelCls } from '../../components/ui/formStyles'
 import { useServices } from '../../hooks/useServices'
 import type { Service } from '../../types'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
@@ -216,11 +216,9 @@ export function ServicesTab() {
               </div>
             </label>
 
-            {message && (
-              <p className={alertCls(message.type)}>
-                {message.text}
-              </p>
-            )}
+            <p className={`text-xs text-center m-0 mt-1 min-h-4 ${message ? (message.type === 'success' ? 'text-[#1a6b2e]' : 'text-red-600') : 'text-transparent'}`}>
+              {message?.text ?? '\u00A0'}
+            </p>
 
             <div className="flex gap-2 justify-end mt-1">
               <button type="button" onClick={closeForm} className="px-4 py-2 rounded-full text-sm font-medium text-[#6e6e73] glass cursor-pointer border-none hover:scale-105 transition-all">

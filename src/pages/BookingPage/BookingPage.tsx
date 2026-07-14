@@ -32,7 +32,11 @@ export function BookingPage() {
   }, [selectedDate])
 
   const slotsForDay = selectedDate
-    ? slots.filter((s) => s.date === selectedDate)
+    ? slots.filter(
+        (s) =>
+          s.date === selectedDate &&
+          new Date(`${s.date}T${s.start_time}`).getTime() >= Date.now() + 2 * 60 * 60 * 1000,
+      )
     : []
 
   function handlePrev() {
