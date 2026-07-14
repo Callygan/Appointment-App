@@ -48,7 +48,14 @@ export function Select({ value, onChange, options, placeholder = 'â€” SelecteazÄ
 
       {/* Dropdown - opens upward */}
       {open && (
-        <div className="absolute left-0 right-0 bottom-[calc(100%+6px)] z-50 glass-heavy rounded-2xl overflow-y-auto max-h-52 shadow-[0_8px_32px_rgba(0,0,0,0.10)]">
+        <div
+          className="absolute left-0 right-0 bottom-[calc(100%+6px)] z-50 glass-heavy rounded-2xl overflow-y-auto max-h-72 shadow-[0_8px_32px_rgba(0,0,0,0.10)]"
+          style={{
+            background: 'rgba(255, 255, 255, 0.94)',
+            backdropFilter: 'blur(64px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(64px) saturate(180%)',
+          }}
+        >
           {options.map((opt) => (
             <div
               key={opt.value}
