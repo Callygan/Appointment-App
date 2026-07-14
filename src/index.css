@@ -53,9 +53,9 @@
   box-sizing: border-box;
 }
 
-html {
+/* html {
   overflow-x: hidden;
-}
+} */
 
 html, body {
   min-height: 100%;
