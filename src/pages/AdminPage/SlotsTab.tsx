@@ -78,9 +78,9 @@ export function SlotsTab() {
   const [showDeleteModal, setShowDeleteModal] = useState<{ id: string; label: string } | null>(null)
   const { slots: adminSlots, datesWithSlots: adminDates, loading: adminLoading, deleteSlot, refresh: adminRefresh } = useAdminSlots(adminYear, adminMonth)
 
-  const inputCls = `${adminInputCls} cursor-pointer min-w-0 box-border`
+  const inputCls = `${adminInputCls} cursor-pointer`
   const compactInputCls = `${inputCls} py-2`
-  const labelCls = `${baseLabelCls} cursor-pointer min-w-0 w-full overflow-hidden leading-tight break-words`
+  const labelCls = `${baseLabelCls} cursor-pointer`
   const openPicker = (e: React.MouseEvent<HTMLLabelElement>) => {
     const input = e.currentTarget.querySelector('input') as HTMLInputElement | null
     input?.showPicker?.()
@@ -138,37 +138,32 @@ export function SlotsTab() {
   const slotsForAdminDate = adminSelectedDate ? adminSlots.filter(s => s.date === adminSelectedDate).sort((a, b) => a.start_time.localeCompare(b.start_time)) : []
 
   return (
-    <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 items-start w-full overflow-x-hidden">
-      <div className="glass rounded-3xl p-4 sm:p-6 w-full xl:w-[500px] xl:shrink-0 min-w-0">
-        <div className="relative flex bg-white/30 rounded-xl p-1 mb-4 sm:mb-5">
+    <div className="flex flex-col xl:flex-row gap-6 items-start">
+      <div className="glass rounded-3xl p-6 w-full xl:w-[500px] xl:shrink-0">
+        <div className="relative flex bg-white/30 rounded-xl p-1 mb-5">
           <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-white/80 shadow-sm pointer-events-none" style={{ transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)', transform: tab === 'bulk' ? 'translateX(calc(100% + 8px))' : 'translateX(0)' }} />
-          <button type="button" onClick={() => { setTab('single'); setMessage(null) }} className={`relative z-10 flex-1 rounded-lg px-2 py-2 text-xs sm:text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'single' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>Slot individual</button>
-          <button type="button" onClick={() => { setTab('bulk'); setMessage(null) }} className={`relative z-10 flex-1 rounded-lg px-2 py-2 text-xs sm:text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'bulk' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>Generare in masa</button>
+          <button type="button" onClick={() => { setTab('single'); setMessage(null) }} className={`relative z-10 flex-1 rounded-lg py-2 text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'single' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>Slot individual</button>
+          <button type="button" onClick={() => { setTab('bulk'); setMessage(null) }} className={`relative z-10 flex-1 rounded-lg py-2 text-sm font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${tab === 'bulk' ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>Generare in masa</button>
         </div>
         {tab === 'single' && (
-          <form className="flex min-w-0 w-full flex-col gap-3 sm:gap-4" onSubmit={handleSingleSubmit}>
-            <div className="grid min-w-0 grid-cols-1 gap-2 sm:gap-3 sm:grid-cols-2">
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
-                <span className="flex items-center gap-1 pl-2">Data</span>
+          <form className="flex flex-col gap-4" onSubmit={handleSingleSubmit}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Data
                 <div className="relative">
                   <input lang="en-GB" type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} required min={localDateStr(today)} className={compactInputCls} />
-                  {!sDate && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-xs sm:text-sm text-[#aaa] pointer-events-none">Alege data</span>}
+                  {!sDate && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
-                <span className="flex items-center gap-1 pl-2">Ora</span>
-                <input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={compactInputCls} />
-              </label>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora<input type="time" value={sStart} onChange={(e) => setSStart(e.target.value)} required className={compactInputCls} /></label>
             </div>
-            <label className={labelCls}>
-              <span className="flex items-center gap-1 pl-2">Durata</span>
+            <label className={labelCls}>Durata
               {(() => {
                 const opts = [{ value: 30, label: '30 min' }, { value: 60, label: '1h' }, { value: 90, label: '1.5h' }, { value: 120, label: '2h' }]
                 const idx = opts.findIndex((o) => o.value === sDuration)
                 return (
-                  <div className="relative mt-0.5 flex min-w-0 overflow-hidden rounded-xl bg-white/30 p-1">
+                  <div className="relative flex bg-white/30 rounded-xl p-1 mt-0.5">
                     <div className="absolute top-1 bottom-1 rounded-lg bg-white/80 shadow-sm pointer-events-none" style={{ width: `calc((100% - 8px) / ${opts.length})`, transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(calc(${idx} * 100% + ${idx} * 2px))` }} />
-                    {opts.map((o) => (<button key={o.value} type="button" onClick={() => setSDuration(o.value)} className={`relative z-10 flex-1 min-w-0 rounded-lg py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${sDuration === o.value ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>{o.label}</button>))}
+                    {opts.map((o) => (<button key={o.value} type="button" onClick={() => setSDuration(o.value)} className={`relative z-10 flex-1 rounded-lg py-2 text-xs font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${sDuration === o.value ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>{o.label}</button>))}
                   </div>
                 )
               })()}
@@ -178,51 +173,42 @@ export function SlotsTab() {
           </form>
         )}
         {tab === 'bulk' && (
-          <form className="flex min-w-0 w-full flex-col gap-3 sm:gap-4" onSubmit={handleBulkSubmit}>
-            <div className="grid min-w-0 grid-cols-1 gap-2 sm:gap-3 sm:grid-cols-2">
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
-                <span className="flex items-center gap-1 pl-2">De la data</span>
+          <form className="flex flex-col gap-4" onSubmit={handleBulkSubmit}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>De la data
                 <div className="relative">
                   <input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={compactInputCls} />
-                  {!bFrom && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-xs sm:text-sm text-[#aaa] pointer-events-none">Alege data</span>}
+                  {!bFrom && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
-                <span className="flex items-center gap-1 pl-2">Pana la data</span>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Pana la data
                 <div className="relative">
                   <input lang="en-GB" type="date" value={bTo} onChange={(e) => setBTo(e.target.value)} required min={bFrom || localDateStr(today)} className={compactInputCls} />
-                  {!bTo && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-xs sm:text-sm text-[#aaa] pointer-events-none">Alege data</span>}
+                  {!bTo && <span className="date-placeholder absolute inset-0 flex items-center px-4 text-sm text-[#aaa] pointer-events-none">Alege data</span>}
                 </div>
               </label>
             </div>
-            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
-                <span className="flex items-center gap-1 pl-2">Ora start</span>
-                <input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={compactInputCls} />
-              </label>
-              <label className={`${labelCls} min-w-0`} onClick={openPicker}>
-                <span className="flex items-center gap-1 pl-2">Ora sfarsit</span>
-                <input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={compactInputCls} />
-              </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={compactInputCls} /></label>
+              <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={compactInputCls} /></label>
             </div>
-            <label className={labelCls}>
-              <span className="flex items-center gap-1 pl-2">Durata slotului</span>
+            <label className={labelCls}>Durata slotului
               {(() => {
                 const opts = [{ value: 30, label: '30 min' }, { value: 60, label: '1h' }, { value: 90, label: '1.5h' }, { value: 120, label: '2h' }]
                 const idx = opts.findIndex((o) => o.value === bDuration)
                 return (
-                  <div className="relative mt-0.5 flex min-w-0 overflow-hidden rounded-xl bg-white/30 p-1">
+                  <div className="relative flex bg-white/30 rounded-xl p-1 mt-0.5">
                     <div className="absolute top-1 bottom-1 rounded-lg bg-white/80 shadow-sm pointer-events-none" style={{ width: `calc((100% - 8px) / ${opts.length})`, transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(calc(${idx} * 100% + ${idx} * 2px))` }} />
-                    {opts.map((o) => (<button key={o.value} type="button" onClick={() => setBDuration(o.value)} className={`relative z-10 flex-1 min-w-0 rounded-lg py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${bDuration === o.value ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>{o.label}</button>))}
+                    {opts.map((o) => (<button key={o.value} type="button" onClick={() => setBDuration(o.value)} className={`relative z-10 flex-1 rounded-lg py-2 text-xs font-semibold cursor-pointer border-none bg-transparent transition-colors duration-200 ${bDuration === o.value ? 'text-[#1d1d1f]' : 'text-[#6e6e73]'}`}>{o.label}</button>))}
                   </div>
                 )
               })()}
             </label>
             <div className="flex flex-col gap-2">
-              <span className="text-[11px] sm:text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Zile din saptamana</span>
-              <div className="flex max-w-full flex-wrap gap-1.5 sm:gap-2">
+              <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Zile din saptamana</span>
+              <div className="flex flex-wrap gap-2">
                 {DAY_VALUES.map((day, i) => (
-                  <button key={day} type="button" onClick={() => toggleDay(day)} className={`rounded-full px-2.5 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-xs font-semibold cursor-pointer transition-all border ${bDays.includes(day) ? 'bg-[#34c759]/15 border-[#34c759]/40 text-[#1a6b2e] scale-105' : 'bg-white/40 border-white/60 text-[#6e6e73] hover:bg-white/60'}`}>{DAY_LABELS[i]}</button>
+                  <button key={day} type="button" onClick={() => toggleDay(day)} className={`rounded-full px-3 py-1.5 text-xs font-semibold cursor-pointer transition-all border ${bDays.includes(day) ? 'bg-[#34c759]/15 border-[#34c759]/40 text-[#1a6b2e] scale-105' : 'bg-white/40 border-white/60 text-[#6e6e73] hover:bg-white/60'}`}>{DAY_LABELS[i]}</button>
                 ))}
               </div>
             </div>

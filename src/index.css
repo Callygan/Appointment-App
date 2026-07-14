@@ -19,7 +19,6 @@
 @utility glass {
   background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.72);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
@@ -27,7 +26,6 @@
 @utility glass-header {
   background: rgba(255, 255, 255, 0.62);
   backdrop-filter: blur(56px) saturate(190%);
-  -webkit-backdrop-filter: blur(56px) saturate(190%);
 }
 
 @utility glass-menu {
@@ -36,7 +34,6 @@
   border: 1px solid rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(52px) saturate(185%);
-  -webkit-backdrop-filter: blur(52px) saturate(185%);
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
@@ -48,7 +45,6 @@
 @utility glass-heavy {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(48px) saturate(200%);
-  -webkit-backdrop-filter: blur(48px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.88);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1);
 }
