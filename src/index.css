@@ -54,7 +54,7 @@
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 html, body {
@@ -79,7 +79,7 @@ body {
   color: #1d1d1f;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Previne zoom automat iOS Safari la focus pe input (declanșat de font-size < 16px) */
