@@ -78,6 +78,7 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   overflow-x: hidden;
+  background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%);
 }
 
 /* Previne zoom automat iOS Safari la focus pe input (declanșat de font-size < 16px) */
