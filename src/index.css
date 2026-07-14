@@ -93,6 +93,24 @@ input, select, textarea {
   font-size: max(16px, 1em);
 }
 
+/* Native date/time inputs au o lățime intrinsecă (spinner/valoare) care depășește
+   containerul flex/grid pe mobil (iOS WebKit + Blink) și ignoră width:100%.
+   Le forțăm să respecte lățimea celulei ca să nu iasă din chenar. */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  min-width: 0;
+}
+
 /* Placeholder custom pentru date inputs — vizibil doar pe Safari iOS (nu pe Chrome/Firefox care afișează propria valoare) */
 input[type="date"]:not(:invalid) ~ .date-placeholder,
 input[type="date"][value=""] ~ .date-placeholder {
