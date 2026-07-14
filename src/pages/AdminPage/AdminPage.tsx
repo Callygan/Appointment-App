@@ -65,6 +65,7 @@ export function AdminPage() {
   function selectTab(t: TabId) {
     setTab(t)
     setMenuOpen(false)
+    window.scrollTo(0, 0)
   }
 
   return (
@@ -149,7 +150,7 @@ export function AdminPage() {
               {TAB_ORDER.map(id => (
                 <button
                   key={id}
-                  onClick={() => setTab(id)}
+                  onClick={() => selectTab(id)}
                   className={`relative z-10 flex items-center gap-3 h-10 rounded-xl px-3 text-sm font-medium cursor-pointer border-none w-full bg-transparent transition-colors duration-200 text-left ${tab === id ? 'text-[#1d1d1f]' : 'text-[#6e6e73] hover:text-[#1d1d1f]'}`}
                 >
                   <TabIcon id={id} />
