@@ -54,7 +54,7 @@
 }
 
 html {
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 html, body {
@@ -73,13 +73,11 @@ body::before {
 }
 
 body {
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   color: #1d1d1f;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 /* Previne zoom automat iOS Safari la focus pe input (declanșat de font-size < 16px) */
