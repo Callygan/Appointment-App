@@ -69,7 +69,7 @@ export function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-8 pb-16">
+    <div className="min-h-screen px-4 py-8 pb-16 pt-[calc(2rem+env(safe-area-inset-top))]">
       <div className="w-full">
         <header className="flex items-center justify-between mb-6 max-w-screen-2xl mx-auto">
           <h1 className="text-3xl font-semibold pl-2 text-[#1d1d1f] tracking-tight m-0">Dashboard</h1>
