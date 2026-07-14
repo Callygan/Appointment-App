@@ -78,14 +78,14 @@ export function AppointmentsTab() {
       </div>
       {pending.length > 0 && (
         <Section title={`În așteptare (${pending.length})`} color="warning">
-          <AppointmentTable items={pending} onRequestCancel={setPendingCancel} onConfirm={confirmAppointment} onEdit={setEditing} showCancel showConfirm />
+          <AppointmentTable items={pending} onRequestCancel={setPendingCancel} onConfirm={confirmAppointment} onEdit={setEditing} showCancel showConfirm showEdit />
         </Section>
       )}
 
       <Section title={`Viitoare (${upcoming.length})`} color="success">
         {upcoming.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări viitoare.</p>
-          : <AppointmentTable items={upcoming} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel />}
+          : <AppointmentTable items={upcoming} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel showEdit />}
       </Section>
 
       <Section title={`Trecute (${past.length})`} color="info" action={
@@ -93,13 +93,13 @@ export function AppointmentsTab() {
       }>
         {past.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări trecute.</p>
-          : <AppointmentTable items={past} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} />}
+          : <AppointmentTable items={past} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} showEdit={false} />}
       </Section>
 
       <Section title={`Anulate (${cancelled.length})`} color="danger">
         {cancelled.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări anulate.</p>
-          : <AppointmentTable items={cancelled} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} />}
+          : <AppointmentTable items={cancelled} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} showEdit={false} />}
       </Section>
 
       {pendingCancel && (
@@ -155,12 +155,13 @@ interface TableProps {
   onConfirm?: (id: string) => void
   showCancel: boolean
   showConfirm?: boolean
+  showEdit?: boolean
 }
 
 type SortKey = 'booking_number' | 'date' | 'time' | 'client_name' | 'service'
 type SortDir = 'asc' | 'desc'
 
-function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCancel, showConfirm }: TableProps) {
+function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCancel, showConfirm, showEdit = true }: TableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -184,7 +185,7 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
     return sortDir === 'asc' ? cmp : -cmp
   })
 
-  const hasActions = true
+  const hasActions = showEdit || showCancel || showConfirm
 
   const COLS: { label: string; key?: SortKey }[] = [
     { label: 'Nr.', key: 'booking_number' },
@@ -253,16 +254,18 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
               <td className="px-4 py-3 text-[#1d1d1f]">{a.services?.name ?? <span className="text-[#6e6e73]/40">—</span>}</td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => onEdit(a)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-[#34c759] hover:bg-white/50 bg-transparent border-none cursor-pointer transition-all"
-                    aria-label="Editează data și ora"
-                    title="Editează data și ora"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" />
-                    </svg>
-                  </button>
+                  {showEdit && (
+                    <button
+                      onClick={() => onEdit(a)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6e6e73] hover:text-[#34c759] hover:bg-white/50 bg-transparent border-none cursor-pointer transition-all"
+                      aria-label="Editează data și ora"
+                      title="Editează data și ora"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" />
+                      </svg>
+                    </button>
+                  )}
                   {showConfirm && (
                     <button
                       onClick={() => onConfirm?.(a.id)}
@@ -290,8 +293,8 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
 }
 
 function ExportButton({ items }: { items: ReturnType<typeof useAppointments>['appointments'] }) {
-  function handleExport() {
-    const BOM = '\uFEFF'
+  async function handleExport() {
+    const XLSX = await import('xlsx')
     const headers = ['Nr. programare', 'Data', 'Serviciu', 'Client', 'Telefon', 'Pret (RON)']
 
     function toRoDate(iso: string): string {
@@ -308,26 +311,21 @@ function ExportButton({ items }: { items: ReturnType<typeof useAppointments>['ap
       .map(a => {
         const date = a.available_slots?.date ?? a.appointment_date ?? ''
         return [
-          `#${a.booking_number}`,
+          a.booking_number,
           date ? toRoDate(date) : '',
           a.services?.name ?? '',
           a.client_name,
           a.client_phone,
-          a.services?.price != null ? String(a.services.price) : '',
+          a.services?.price != null ? a.services.price : '',
         ]
       })
 
-    const csv = BOM + [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-      .join('\r\n')
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    ws['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 16 }, { wch: 12 }]
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `programari_trecute_${new Date().toISOString().slice(0, 10)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Programari trecute')
+    XLSX.writeFile(wb, `programari_trecute_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
   return (
