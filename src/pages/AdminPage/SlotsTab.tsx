@@ -174,7 +174,7 @@ export function SlotsTab() {
         )}
         {tab === 'bulk' && (
           <form className="flex flex-col gap-4" onSubmit={handleBulkSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <label className={`${labelCls} min-w-0`} onClick={openPicker}>De la data
                 <div className="relative">
                   <input lang="en-GB" type="date" value={bFrom} onChange={(e) => { setBFrom(e.target.value); if (bTo && bTo < e.target.value) setBTo('') }} required min={localDateStr(today)} className={compactInputCls} />
@@ -188,7 +188,7 @@ export function SlotsTab() {
                 </div>
               </label>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora start<input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} required className={compactInputCls} /></label>
               <label className={`${labelCls} min-w-0`} onClick={openPicker}>Ora sfarsit<input type="time" value={bEnd} onChange={(e) => setBEnd(e.target.value)} required className={compactInputCls} /></label>
             </div>
