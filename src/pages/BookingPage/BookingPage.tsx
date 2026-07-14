@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { MonthCalendar } from '../../components/MonthCalendar/MonthCalendar'
 import { DaySlots } from '../../components/DaySlots/DaySlots'
 import { BookingForm } from '../../components/BookingForm/BookingForm'
@@ -19,6 +19,17 @@ export function BookingPage() {
 
   const { slots, loading, error, datesWithSlots, refresh } = useAvailableSlots(year, month)
   const { services } = useServices()
+
+  const slotsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (selectedDate) {
+      const t = setTimeout(() => {
+        slotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 150)
+      return () => clearTimeout(t)
+    }
+  }, [selectedDate])
 
   const slotsForDay = selectedDate
     ? slots.filter((s) => s.date === selectedDate)
@@ -79,6 +90,7 @@ export function BookingPage() {
 
         {selectedDate && (
           <div
+            ref={slotsRef}
             className="glass rounded-3xl p-6 overflow-hidden"
             style={{ animation: 'slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}
           >

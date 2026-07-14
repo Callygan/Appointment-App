@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { labelCls } from '../../components/ui/formStyles'
 import { STATUS_COLOR, STATUS_LABELS, type AppointmentStatus } from '../../utils/statusColors'
@@ -36,6 +36,17 @@ export function MyAppointmentPage() {
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [nowTs, setNowTs] = useState(() => Date.now())
+
+  const resultRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (appointment) {
+      const t = setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 120)
+      return () => clearTimeout(t)
+    }
+  }, [appointment])
 
   const MAX_ATTEMPTS = 5
   const LOCKOUT_MS = 3 * 60 * 1000 // 3 minute
@@ -217,6 +228,7 @@ export function MyAppointmentPage() {
         {/* Result */}
         {appointment && status && (
           <div
+            ref={resultRef}
             className="mt-4 glass rounded-3xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
             style={{ animation: 'slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}
           >

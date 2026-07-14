@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { MonthCalendar } from '../MonthCalendar/MonthCalendar'
 import { DaySlots } from '../DaySlots/DaySlots'
@@ -28,6 +28,17 @@ export function EditAppointmentModal({ appointment, onDismiss, onSave }: EditApp
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const slotsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (selectedDate) {
+      const t = setTimeout(() => {
+        slotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 120)
+      return () => clearTimeout(t)
+    }
+  }, [selectedDate])
 
   useEffect(() => {
     const from = `${year}-${String(month).padStart(2, '0')}-01`
@@ -176,7 +187,7 @@ export function EditAppointmentModal({ appointment, onDismiss, onSave }: EditApp
             </div>
 
             {selectedDate && (
-              <div className="glass rounded-2xl p-4 overflow-hidden mt-3">
+              <div ref={slotsRef} className="glass rounded-2xl p-4 overflow-hidden mt-3">
                 <DaySlots
                   date={selectedDate}
                   slots={slotsForDay}
