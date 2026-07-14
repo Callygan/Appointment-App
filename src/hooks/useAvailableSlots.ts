@@ -35,8 +35,14 @@ export function useAvailableSlots(year: number, month: number) {
       })
   }, [year, month, tick])
 
-  // Returns a Set of date strings ('YYYY-MM-DD') that have free slots
-  const datesWithSlots = new Set(slots.map((s) => s.date))
+  // Returns a Set of date strings ('YYYY-MM-DD') that have free, still-bookable
+  // slots (at least 2 hours from now)
+  const minBookTs = Date.now() + 2 * 60 * 60 * 1000
+  const datesWithSlots = new Set(
+    slots
+      .filter((s) => new Date(`${s.date}T${s.start_time}`).getTime() >= minBookTs)
+      .map((s) => s.date),
+  )
 
   return { slots, loading, error, datesWithSlots, refresh }
 }
