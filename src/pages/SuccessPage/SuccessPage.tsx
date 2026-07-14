@@ -1,5 +1,6 @@
 import type { AvailableSlot } from '../../types'
 import { greenBtnCls } from '../../components/ui/buttons'
+import { useEffect } from 'react'
 
 interface Props {
   onBack: () => void
@@ -8,6 +9,10 @@ interface Props {
 }
 
 export function SuccessPage({ onBack, bookingNumber, slot }: Props) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
   const dateLabel = slot ? new Date(slot.date + 'T00:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : null
   const timeLabel = slot ? slot.start_time.slice(0, 5) : null
   return (
