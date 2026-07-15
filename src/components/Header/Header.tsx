@@ -25,14 +25,14 @@ export function Header() {
   }, [])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 flex justify-center px-4 pt-4">
+    <header className="fixed top-0 left-0 right-0 z-40 flex justify-center md:px-4 md:pt-4">
       {menuOpen && (
         <div
           className="fixed inset-0 z-[39] md:hidden"
           onClick={() => setMenuOpen(false)}
         />
       )}
-      <nav className="glass-menu rounded-2xl px-4 py-2.5 w-full max-w-4xl flex items-center justify-between">
+      <nav className="glass-menu rounded-none md:rounded-2xl px-5 md:px-4 pb-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] md:pt-2.5 w-full max-w-4xl flex items-center justify-between">
         <Link to="/" className="flex items-center pl-2 gap-3 no-underline group select-none">
           {/* Wordmark */}
           <div className="flex flex-col leading-none gap-[3px]">
@@ -82,7 +82,7 @@ export function Header() {
       </nav>
 
       <div
-        className="absolute top-[4.5rem] left-4 right-4 glass-menu rounded-2xl py-2 md:hidden overflow-hidden z-[41]"
+        className="absolute top-[calc(4rem+env(safe-area-inset-top))] left-3 right-3 glass-menu rounded-2xl py-2 md:hidden overflow-hidden z-[41]"
         style={{
           opacity: menuOpen ? 1 : 0,
           transform: menuOpen ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.97)',
