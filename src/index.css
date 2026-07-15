@@ -62,30 +62,15 @@ html, body {
   min-height: 100%;
 }
 
-/* Opaque safe-area covers: content scrolls BEHIND these fixed strips, so it
-   never shows under the status bar / dynamic island (top) or home indicator
-   (bottom) on iOS. Height is 0 on devices without safe areas, so no effect. */
+/* Fixed gradient as a real positioned layer (not background-attachment: fixed),
+   so backdrop-filter blurs it correctly on Chromium without transparency artifacts. */
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top);
-  background: #f8e0f8;
-  z-index: 100;
-  pointer-events: none;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-bottom);
-  background: #f8e0f8;
-  z-index: 100;
+  inset: 0;
+  z-index: -1;
+  /* background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%); */
+  /* background: #f8e0f8; */
   pointer-events: none;
 }
 
