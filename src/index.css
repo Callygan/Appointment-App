@@ -55,8 +55,8 @@
 
 html {
   overflow-x: hidden;
-  background: #2a943b;
-  /* background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%); */
+  /* background: #f8e0f8; */
+  background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%);
 }
 
 html, body {

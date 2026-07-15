@@ -40,7 +40,7 @@ function AppContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="fixed inset-0 -z-10" style={{ background: 'linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%)' }} />
+      <div className="fixed inset-0 -z-10" />
       {!hideHeader && <Header />}
       <div className="flex-1">
         <Routes>
