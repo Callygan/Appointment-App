@@ -12,6 +12,7 @@ import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute'
 import { Footer } from './components/Footer/Footer'
 import { NotFoundPage } from './pages/NotFoundPage/NotFoundPage'
 import { Header } from './components/Header/Header'
+import { AuthProvider } from './hooks/useAuth'
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Programare',
@@ -40,7 +41,6 @@ function AppContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="fixed inset-0 -z-10" />
       {!hideHeader && <Header />}
       <div className="flex-1">
         <Routes>
@@ -70,7 +70,9 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

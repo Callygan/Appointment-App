@@ -305,7 +305,7 @@ export function StatisticsTab() {
             </ChartCard>
           </div>
 
-          {/* Revenue by service + Top clienți */}
+          {/* Revenue by service + Top clients */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {data.byService.length > 0 && (
             <ChartCard title="Venit estimat per serviciu">
@@ -332,7 +332,7 @@ export function StatisticsTab() {
             </ChartCard>
           )}
 
-          {/* Top clienți */}
+          {/* Top clients */}
           {data.topClients.length > 0 && (
             <ChartCard title="Top clienți">
               <div className="overflow-x-auto">

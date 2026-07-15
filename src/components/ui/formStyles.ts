@@ -1,7 +1,7 @@
 export const inputCls =
   'bg-white/50 backdrop-blur-sm border rounded-2xl px-4 py-3 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] w-full'
 
-/** Variantă pentru formularele admin — border color inclus, padding mai mic (py-2.5). */
+/** Variant for admin forms — border color included, smaller padding (py-2.5). */
 export const adminInputCls =
   'bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl px-4 py-2.5 text-sm font-normal text-[#1d1d1f] outline-none focus:bg-white/85 focus:border-[#34c759] transition-all w-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)]'
 

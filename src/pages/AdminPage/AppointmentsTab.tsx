@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppointments } from '../../hooks/useAppointments'
-import { getDateStr, formatDate, formatTime } from '../../utils/dateUtils'
+import { getDateStr, formatDate, formatTime, addMinutesToTime } from '../../utils/dateUtils'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { EditAppointmentModal } from '../../components/ui/EditAppointmentModal'
 
@@ -12,7 +12,16 @@ export function AppointmentsTab() {
 
   const today = getDateStr(new Date())
   const effectiveDate = (a: typeof appointments[0]) => a.available_slots?.date ?? a.appointment_date ?? null
-  const effectiveEndTime = (a: typeof appointments[0]) => a.available_slots?.end_time ?? a.appointment_time ?? null
+  // Real end time: prefer the slot's end_time; otherwise derive it from the start
+  // time plus the service duration; fall back to the start time if neither exists.
+  const effectiveEndTime = (a: typeof appointments[0]) => {
+    if (a.available_slots?.end_time) return a.available_slots.end_time
+    const start = a.available_slots?.start_time ?? a.appointment_time ?? null
+    if (!start) return null
+    return a.services?.duration_minutes
+      ? addMinutesToTime(start, a.services.duration_minutes)
+      : start
+  }
 
   function isAppointmentPast(a: typeof appointments[0]): boolean {
     const d = effectiveDate(a)

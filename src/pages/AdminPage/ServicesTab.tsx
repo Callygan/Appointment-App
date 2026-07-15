@@ -81,7 +81,7 @@ export function ServicesTab() {
   async function handleDelete(id: string, svcName: string) {
     const todayStr = getDateStr(new Date())
 
-    // Verificăm manual dacă există programări active viitoare
+    // Manually check whether there are future active appointments
     const { data: activeAppts } = await supabase
       .from('appointments')
       .select('id, appointment_date, available_slots(date)')
@@ -104,7 +104,7 @@ export function ServicesTab() {
       return
     }
 
-    // Fără programări viitoare active — nullificăm toate referințele și ștergem
+    // No future active appointments — null out all references and delete
     await supabase.from('appointments').update({ service_id: null }).eq('service_id', id)
 
     const { error } = await supabase.from('services').delete().eq('id', id)
@@ -232,7 +232,7 @@ export function ServicesTab() {
         </div>
       </div>
 
-      {/* Lista servicii */}
+      {/* Services list */}
       <div className="glass rounded-2xl">
         {services.length === 0 ? (
           <p className="text-sm text-[#6e6e73] px-5 py-6 text-center">Niciun serviciu adăugat.</p>

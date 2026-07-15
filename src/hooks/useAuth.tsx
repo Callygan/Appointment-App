@@ -1,14 +1,24 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, createContext, useContext } from 'react'
+import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Session } from '@supabase/supabase-js'
+import type { Session, AuthError } from '@supabase/supabase-js'
 
-const INACTIVITY_MS = 30 * 60 * 1000   // 30 minute
+const INACTIVITY_MS = 60 * 60 * 1000   // 1 oră
 const ABSOLUTE_MS   = 10 * 60 * 60 * 1000 // 10 ore
 const LS_LAST_ACTIVITY = 'admin_last_activity'
 const LS_LOGIN_TIME    = 'admin_login_time'
 const ACTIVITY_EVENTS  = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'] as const
 
-export function useAuth() {
+interface AuthContextValue {
+  session: Session | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<AuthError | null>
+  signOut: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -19,12 +29,12 @@ export function useAuth() {
     await supabase.auth.signOut()
   }, [])
 
-  // Actualizează timestamp activitate
+  // Update activity timestamp
   const onActivity = useCallback(() => {
     localStorage.setItem(LS_LAST_ACTIVITY, String(Date.now()))
   }, [])
 
-  // Pornește / oprește watcher-ul de inactivitate
+  // Start / stop inactivity watcher
   const startWatcher = useCallback(() => {
     ACTIVITY_EVENTS.forEach(e => window.addEventListener(e, onActivity, { passive: true }))
 
@@ -48,7 +58,7 @@ export function useAuth() {
       setSession(data.session)
       setLoading(false)
       if (data.session) {
-        // Dacă există sesiune la mount (tab reîncărcat), verifică imediat expirarea
+        // If a session exists at mount (tab reloaded), check expiration immediately
         const loginTime    = Number(localStorage.getItem(LS_LOGIN_TIME) ?? 0)
         const lastActivity = Number(localStorage.getItem(LS_LAST_ACTIVITY) ?? 0)
         const now = Date.now()
@@ -73,7 +83,7 @@ export function useAuth() {
     }
   }, [forceSignOut, startWatcher, stopWatcher])
 
-  async function signIn(email: string, password: string) {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (!error) {
       const now = String(Date.now())
@@ -82,12 +92,22 @@ export function useAuth() {
       startWatcher()
     }
     return error
-  }
+  }, [startWatcher])
 
-  async function signOut() {
+  const signOut = useCallback(async () => {
     stopWatcher()
     await forceSignOut()
-  }
+  }, [stopWatcher, forceSignOut])
 
-  return { session, loading, signIn, signOut }
+  return (
+    <AuthContext.Provider value={{ session, loading, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
+  return ctx
 }

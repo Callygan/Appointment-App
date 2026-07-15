@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { isBookable } from '../utils/dateUtils'
 import type { AvailableSlot } from '../types'
 
 export function useAvailableSlots(year: number, month: number) {
@@ -37,10 +38,9 @@ export function useAvailableSlots(year: number, month: number) {
 
   // Returns a Set of date strings ('YYYY-MM-DD') that have free, still-bookable
   // slots (at least 2 hours from now)
-  const minBookTs = Date.now() + 2 * 60 * 60 * 1000
   const datesWithSlots = new Set(
     slots
-      .filter((s) => new Date(`${s.date}T${s.start_time}`).getTime() >= minBookTs)
+      .filter((s) => isBookable(s.date, s.start_time))
       .map((s) => s.date),
   )
 
