@@ -25,7 +25,7 @@ export function Header() {
   }, [])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 flex justify-center px-4 pt-4">
+    <header className="relative md:fixed md:top-0 md:left-0 md:right-0 z-40 flex justify-center px-4 pt-4">
       {menuOpen && (
         <div
           className="fixed inset-0 z-[39] md:hidden"

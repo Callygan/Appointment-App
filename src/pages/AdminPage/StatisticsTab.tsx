@@ -314,7 +314,7 @@ export function StatisticsTab() {
                   <thead>
                     <tr className="border-b border-black/[0.06]">
                       <th className="text-left text-xs font-medium text-[#6e6e73] pb-2 pr-4">Serviciu</th>
-                      <th className="text-right text-xs font-medium text-[#6e6e73] pb-2 pr-4">Programări</th>
+                      <th className="text-center text-xs font-medium text-[#6e6e73] pb-2 pr-4">Programări</th>
                       <th className="text-right text-xs font-medium text-[#6e6e73] pb-2">Venit est.</th>
                     </tr>
                   </thead>
@@ -322,7 +322,7 @@ export function StatisticsTab() {
                     {data.byService.map((s, i) => (
                       <tr key={i} className="border-b border-black/[0.04] last:border-0">
                         <td className="py-2 pr-4 text-[#1d1d1f] font-medium">{s.name}</td>
-                        <td className="py-2 pr-4 text-right text-[#6e6e73]">{s.count}</td>
+                        <td className="py-2 pr-4 text-center text-[#6e6e73]">{s.count}</td>
                         <td className="py-2 text-right text-[#1d1d1f] font-semibold">{s.revenue} RON</td>
                       </tr>
                     ))}
@@ -342,7 +342,7 @@ export function StatisticsTab() {
                       <th className="text-left text-xs font-medium text-[#6e6e73] pb-2 pr-4">#</th>
                       <th className="text-left text-xs font-medium text-[#6e6e73] pb-2 pr-4">Nume</th>
                       <th className="text-left text-xs font-medium text-[#6e6e73] pb-2 pr-4">Telefon</th>
-                      <th className="text-right text-xs font-medium text-[#6e6e73] pb-2">Vizite</th>
+                      <th className="text-center text-xs font-medium text-[#6e6e73] pb-2">Vizite</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -351,9 +351,9 @@ export function StatisticsTab() {
                         <td className="py-2 pr-4 text-[#6e6e73] text-xs">{i + 1}</td>
                         <td className="py-2 pr-4 text-[#1d1d1f] font-medium">{c.name}</td>
                         <td className="py-2 pr-4 text-[#6e6e73] text-xs">{c.phone}</td>
-                        <td className="py-2 text-right">
+                        <td className="py-2 text-center">
                           <span className="text-xs font-semibold bg-[#34c759]/15 text-[#1a6b2e] px-2 py-0.5 rounded-full">
-                            {c.count} {c.count === 1 ? 'vizită' : 'vizite'}
+                            {c.count}
                           </span>
                         </td>
                       </tr>

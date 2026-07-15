@@ -55,14 +55,11 @@
 
 html {
   overflow-x: hidden;
+  background: #f8e0f8;
 }
 
 html, body {
   min-height: 100%;
-}
-
-html {
-  background-color: #e8d5ff;
 }
 
 /* Fixed gradient as a real positioned layer (not background-attachment: fixed),
@@ -72,7 +69,8 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%);
+  /* background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%); */
+  /* background: #f8e0f8; */
   pointer-events: none;
 }
 
@@ -88,14 +86,14 @@ body {
   overflow-x: hidden;
 }
 
-/* Previne zoom automat iOS Safari la focus pe input (declanșat de font-size < 16px) */
 input, select, textarea {
   font-size: max(16px, 1em);
 }
 
-/* Native date/time inputs au o lățime intrinsecă (spinner/valoare) care depășește
-   containerul flex/grid pe mobil (iOS WebKit + Blink) și ignoră width:100%.
-   Le forțăm să respecte lățimea celulei ca să nu iasă din chenar. */
+/* Native date/time inputs have an intrinsic width (spinner/value) that
+   overflows the flex/grid container on mobile (iOS WebKit + Blink) and
+   ignores width:100%. We force them to respect the cell's width so they
+   don't spill outside the border. */
 input[type="date"],
 input[type="time"] {
   -webkit-appearance: none;
@@ -111,12 +109,12 @@ input[type="time"]::-webkit-date-and-time-value {
   min-width: 0;
 }
 
-/* Placeholder custom pentru date inputs — vizibil doar pe Safari iOS (nu pe Chrome/Firefox care afișează propria valoare) */
+/* Custom placeholder for date inputs — visible only on Safari iOS (not on Chrome/Firefox, which display their own value) */
 input[type="date"]:not(:invalid) ~ .date-placeholder,
 input[type="date"][value=""] ~ .date-placeholder {
   display: flex;
 }
-/* Pe Chrome/Firefox input[type=date] are mereu :invalid false și arată valoarea proprie — ascundem placeholder-ul nostru */
+/* On Chrome/Firefox input[type=date] are always :invalid false and display their own value — hide our placeholder */
 @supports not (-webkit-touch-callout: none) {
   .date-placeholder {
     display: none !important;

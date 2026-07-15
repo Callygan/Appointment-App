@@ -35,7 +35,7 @@ const VALUES = [
 
 export function AboutPage() {
   return (
-    <div className="flex flex-col items-center px-4 pt-28 pb-16">
+    <div className="flex flex-col items-center px-4 pt-6 md:pt-28 pb-16">
 
       <div className="w-full max-w-2xl flex flex-col gap-10">
 
@@ -100,7 +100,7 @@ export function AboutPage() {
             Îmi place mult să cunosc oameni noi și sunt deschisă pentru orice discuție. Călătoriile, cafeaua și ceva dulce la ea mă fac fericită. Înainte sau după procedură putem savura cafeaua împreună.
           </p>
           <p className="text-sm text-[#6e6e73] leading-relaxed">
-            Dacă ai întrebări — scrie-mi în privat sau în comentarii pe Instagram. Vă aștept să creăm ceva frumos împreună!
+            Dacă ai întrebări — scrie-mi în privat pe Instagram. Vă aștept să creăm ceva frumos împreună!
           </p>
 
           {/* Specialties */}
