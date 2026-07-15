@@ -14,7 +14,7 @@ export function PrivacyPage() {
   const year = new Date().getFullYear()
 
   return (
-    <div className="flex flex-col items-center px-4 pt-28 pb-16">
+    <div className="flex flex-col items-center px-4 pt-6 md:pt-28 pb-16">
 
       <div className="w-full max-w-2xl">
         <header className="text-center mb-10">
