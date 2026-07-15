@@ -35,62 +35,51 @@ export function GdprTab() {
   cutoff.setMonth(cutoff.getMonth() - 12)
   const cutoffStr = getDateStr(cutoff)
 
+  // Fetch all appointments not yet anonymized, together with their effective
+  // date (the slot date when booked via a slot, otherwise the legacy
+  // appointment_date). Filtering by date is done in JS because the date can
+  // live in either column.
+  async function fetchNonAnon(): Promise<{ id: string; client_phone: string; effDate: string | null }[] | null> {
+    const { data, error: err } = await supabase
+      .from('appointments')
+      .select('id, client_phone, appointment_date, available_slots(date)')
+      .neq('client_phone', 'număr anonim')
+
+    if (err || !data) return null
+    return data.map((a) => {
+      const slot = a.available_slots as { date: string } | { date: string }[] | null
+      const slotDate = Array.isArray(slot) ? slot[0]?.date : slot?.date
+      return {
+        id: a.id as string,
+        client_phone: a.client_phone as string,
+        effDate: (slotDate ?? a.appointment_date ?? null) as string | null,
+      }
+    })
+  }
+
   async function checkEligible() {
     setChecking(true)
     setError(null)
     setDone(null)
     setEligible(null)
 
-    // Fetch appointments older than 12 months not yet anonymized
-    const { data: old, error: err } = await supabase
-      .from('appointments')
-      .select('id, client_phone')
-      .neq('client_phone', 'număr anonim')
-      .or(`appointment_date.lt.${cutoffStr},available_slots.date.lt.${cutoffStr}`)
-
-    if (err || !old) {
-      // Fallback: query by appointment_date only
-      const { data: old2, error: err2 } = await supabase
-        .from('appointments')
-        .select('id, client_phone')
-        .neq('client_phone', 'număr anonim')
-        .lt('appointment_date', cutoffStr)
-
-      if (err2) {
-        setError('Nu s-au putut verifica datele. Încearcă din nou.')
-        setChecking(false)
-        return
-      }
-
-      await processEligible(old2 ?? [])
-    } else {
-      await processEligible(old)
-    }
-
-    setChecking(false)
-  }
-
-  async function processEligible(oldAppts: { id: string; client_phone: string }[]) {
-    if (oldAppts.length === 0) {
-      setEligible({ count: 0 })
+    const rows = await fetchNonAnon()
+    if (!rows) {
+      setError('Nu s-au putut verifica datele. Încearcă din nou.')
+      setChecking(false)
       return
     }
 
-    // Get unique phones from old appointments
-    const oldPhones = [...new Set(oldAppts.map((a) => a.client_phone).filter(Boolean))]
-
-    // Check which phones also have recent appointments (< 12 months)
-    const { data: recent } = await supabase
-      .from('appointments')
-      .select('client_phone')
-      .in('client_phone', oldPhones)
-      .gte('appointment_date', cutoffStr)
-
-    const recentPhones = new Set((recent ?? []).map((a) => a.client_phone))
-
-    // Eligible = old appointments whose phone has NO recent appointment
-    const eligibleIds = oldAppts.filter((a) => !recentPhones.has(a.client_phone))
-    setEligible({ count: eligibleIds.length })
+    // Phones that still have a recent (< 12 months) appointment must be kept
+    const recentPhones = new Set(
+      rows.filter((r) => r.effDate !== null && r.effDate >= cutoffStr).map((r) => r.client_phone),
+    )
+    // Eligible = old appointments whose phone has no recent appointment
+    const eligible = rows.filter(
+      (r) => r.effDate !== null && r.effDate < cutoffStr && !recentPhones.has(r.client_phone),
+    )
+    setEligible({ count: eligible.length })
+    setChecking(false)
   }
 
   async function runAnonymization() {
@@ -98,36 +87,21 @@ export function GdprTab() {
     setShowConfirm(false)
     setError(null)
 
-    // Step 1: get old appointments not yet anonymized
-    const { data: old, error: fetchErr } = await supabase
-      .from('appointments')
-      .select('id, client_phone')
-      .neq('client_phone', 'număr anonim')
-      .lt('appointment_date', cutoffStr)
-
-    if (fetchErr || !old) {
+    // Step 1: get all appointments not yet anonymized, with their effective date
+    const rows = await fetchNonAnon()
+    if (!rows) {
       setError('Eroare la preluarea datelor. Încearcă din nou.')
       setRunning(false)
       return
     }
 
-    if (old.length === 0) {
-      setDone(0)
-      setRunning(false)
-      return
-    }
-
-    const oldPhones = [...new Set(old.map((a) => a.client_phone).filter(Boolean))]
-
-    // Step 2: check which phones have recent appointments
-    const { data: recent } = await supabase
-      .from('appointments')
-      .select('client_phone')
-      .in('client_phone', oldPhones)
-      .gte('appointment_date', cutoffStr)
-
-    const recentPhones = new Set((recent ?? []).map((a) => a.client_phone))
-    const toAnon = old.filter((a) => !recentPhones.has(a.client_phone)).map((a) => a.id)
+    // Step 2: keep phones that still have a recent appointment
+    const recentPhones = new Set(
+      rows.filter((r) => r.effDate !== null && r.effDate >= cutoffStr).map((r) => r.client_phone),
+    )
+    const toAnon = rows
+      .filter((r) => r.effDate !== null && r.effDate < cutoffStr && !recentPhones.has(r.client_phone))
+      .map((r) => r.id)
 
     if (toAnon.length === 0) {
       setDone(0)

@@ -59,6 +59,27 @@ function apptDurationMins(a: Appointment): number {
   return a.services?.duration_minutes ?? 60
 }
 
+// Gray palette for appointments that already happened
+const PAST_COLOR = { bg: 'bg-[#8e8e93]/15', text: 'text-[#6e6e73]', dot: 'bg-[#8e8e93]' }
+
+// An appointment is "past" once its end time is before now
+function isPastAppt(a: Appointment, now: Date = new Date()): boolean {
+  const ds = apptDate(a)
+  const t = apptTime(a)
+  if (!ds || !t) return false
+  const [sh, sm] = t.split(':').map(Number)
+  const start = new Date(`${ds}T00:00:00`)
+  start.setHours(sh, sm, 0, 0)
+  const end = new Date(start.getTime() + apptDurationMins(a) * 60000)
+  return end.getTime() < now.getTime()
+}
+
+// Gray for past appointments, status color otherwise
+function apptColor(a: Appointment) {
+  return isPastAppt(a) ? PAST_COLOR : STATUS_COLOR[a.status]
+}
+
+
 export function CalendarTab() {
   const { appointments, loading, updateAppointmentSchedule } = useAppointments()
   const [view, setView] = useState<View>('month')
@@ -115,7 +136,7 @@ export function CalendarTab() {
 
   // ── chip component ───────────────────────────────────────────
   function renderChip(a: Appointment, showTime?: boolean) {
-    const c = STATUS_COLOR[a.status]
+    const c = apptColor(a)
     return (
       <button
         onClick={(e) => { e.stopPropagation(); setSelected(a) }}
@@ -218,7 +239,7 @@ export function CalendarTab() {
                   ))}
                   {/* appointments */}
                   {appts.map(a => {
-                    const c = STATUS_COLOR[a.status]
+                    const c = apptColor(a)
                     const [sh, sm] = apptTime(a).split(':').map(Number)
                     const top = ((sh - HOURS[0]) + sm / 60) * ROW_H
                     const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 22)
@@ -270,7 +291,7 @@ export function CalendarTab() {
             ))}
             {/* appointments */}
             {appts.map(a => {
-              const c = STATUS_COLOR[a.status]
+              const c = apptColor(a)
               const [sh, sm] = apptTime(a).split(':').map(Number)
               const top = ((sh - HOURS[0]) + sm / 60) * ROW_H
               const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 32)
@@ -484,16 +505,18 @@ export function CalendarTab() {
             style={{ animation: 'slideDown 0.3s cubic-bezier(0.4,0,0.2,1)' }}
             onClick={e => e.stopPropagation()}
           >
-            <button onClick={() => { setEditing(selected); setSelected(null) }} className="absolute top-4 right-12 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:text-[#34c759] hover:bg-black/15 transition-colors" aria-label="Editează data și ora" title="Editează data și ora">
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
-            </button>
+            {!isPastAppt(selected) && (
+              <button onClick={() => { setEditing(selected); setSelected(null) }} className="absolute top-4 right-12 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:text-[#34c759] hover:bg-black/15 transition-colors" aria-label="Editează data și ora" title="Editează data și ora">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
+              </button>
+            )}
             <button onClick={() => setSelected(null)} className="absolute top-4 right-4 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:bg-black/15 transition-colors">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
 
             {/* status banner */}
             {(() => {
-              const c = STATUS_COLOR[selected.status]
+              const c = apptColor(selected)
               const labels = STATUS_LABELS
               return (
                 <div className={`flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full w-fit ${c.bg}`}>
