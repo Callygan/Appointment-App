@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppointments } from '../../hooks/useAppointments'
 import { getDateStr, formatDate, formatTime, addMinutesToTime } from '../../utils/dateUtils'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
@@ -91,21 +91,25 @@ export function AppointmentsTab() {
         </Section>
       )}
 
-      <Section title={`Viitoare (${upcoming.length})`} color="success">
+      <Section title={`Viitoare (${upcoming.length})`} color="success" action={
+        upcoming.length > 0 ? <ExportButton items={upcoming} label="viitoare" /> : undefined
+      }>
         {upcoming.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări viitoare.</p>
           : <AppointmentTable items={upcoming} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel showEdit />}
       </Section>
 
       <Section title={`Trecute (${past.length})`} color="info" action={
-        past.length > 0 ? <ExportButton items={past} /> : undefined
+        past.length > 0 ? <ExportButton items={past} label="trecute" /> : undefined
       }>
         {past.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări trecute.</p>
           : <AppointmentTable items={past} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} showEdit={false} />}
       </Section>
 
-      <Section title={`Anulate (${cancelled.length})`} color="danger">
+      <Section title={`Anulate (${cancelled.length})`} color="danger" action={
+        cancelled.length > 0 ? <ExportButton items={cancelled} label="anulate" /> : undefined
+      }>
         {cancelled.length === 0
           ? <p className="text-sm text-[#6e6e73] px-4 py-6 text-center">Nu există programări anulate.</p>
           : <AppointmentTable items={cancelled} onRequestCancel={setPendingCancel} onEdit={setEditing} showCancel={false} showEdit={false} />}
@@ -301,7 +305,43 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
   )
 }
 
-function ExportButton({ items }: { items: ReturnType<typeof useAppointments>['appointments'] }) {
+function ExportButton({ items, label = 'trecute' }: { items: ReturnType<typeof useAppointments>['appointments']; label?: string }) {
+  const [open, setOpen] = useState(false)
+  const [visible, setVisible] = useState(false)
+  const [exportAll, setExportAll] = useState(true)
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+
+  const effDate = (a: (typeof items)[number]) => a.available_slots?.date ?? a.appointment_date ?? ''
+
+  useEffect(() => {
+    if (!open) return
+    // Default the range to the span of available appointments
+    const dates = items.map(effDate).filter(Boolean).sort((a, b) => a.localeCompare(b))
+    if (dates.length) {
+      setStart(dates[0])
+      setEnd(dates[dates.length - 1])
+    }
+    const t = setTimeout(() => setVisible(true), 10)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  function dismiss() {
+    setVisible(false)
+    setTimeout(() => setOpen(false), 250)
+  }
+
+  function inRange(a: (typeof items)[number]): boolean {
+    const d = effDate(a)
+    if (!d) return false
+    if (start && d < start) return false
+    if (end && d > end) return false
+    return true
+  }
+
+  const selected = exportAll ? items : items.filter(inRange)
+
   async function handleExport() {
     const XLSX = await import('xlsx')
     const headers = ['Nr. programare', 'Data', 'Serviciu', 'Client', 'Telefon', 'Pret (RON)']
@@ -311,14 +351,10 @@ function ExportButton({ items }: { items: ReturnType<typeof useAppointments>['ap
       return `${d}.${m}.${y}`
     }
 
-    const rows = [...items]
-      .sort((a, b) => {
-        const da = a.available_slots?.date ?? a.appointment_date ?? ''
-        const db = b.available_slots?.date ?? b.appointment_date ?? ''
-        return da.localeCompare(db)
-      })
+    const rows = [...selected]
+      .sort((a, b) => effDate(a).localeCompare(effDate(b)))
       .map(a => {
-        const date = a.available_slots?.date ?? a.appointment_date ?? ''
+        const date = effDate(a)
         return [
           a.booking_number,
           date ? toRoDate(date) : '',
@@ -333,22 +369,133 @@ function ExportButton({ items }: { items: ReturnType<typeof useAppointments>['ap
     ws['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 16 }, { wch: 12 }]
 
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Programari trecute')
-    XLSX.writeFile(wb, `programari_trecute_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    XLSX.utils.book_append_sheet(wb, ws, `Programari ${label}`)
+    const suffix = exportAll ? 'toate' : `${start}_${end}`
+    XLSX.writeFile(wb, `programari_${label}_${suffix}.xlsx`)
+    dismiss()
+  }
+
+  const inputCls = 'bg-white/50 backdrop-blur-sm border border-white/60 focus:border-[#5e5ce6] focus:bg-white/85 rounded-2xl px-4 py-2.5 text-sm text-[#1d1d1f] outline-none transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] cursor-pointer'
+
+  function openPicker(e: React.MouseEvent<HTMLLabelElement>) {
+    const input = e.currentTarget.querySelector('input')
+    try { input?.showPicker?.() } catch { /* picker already open */ }
   }
 
   return (
-    <button
-      onClick={handleExport}
-      title="Exportă în Excel"
-      className="flex items-center gap-1.5 text-xs text-[#5e5ce6] hover:text-[#3634a3] glass rounded-full px-3 py-1.5 border-none cursor-pointer transition-all hover:scale-105"
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
-      </svg>
-      Export
-    </button>
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        title="Exportă în Excel"
+        className="flex items-center gap-1.5 text-xs text-[#5e5ce6] hover:text-[#3634a3] glass rounded-full px-3 py-1.5 border-none cursor-pointer transition-all hover:scale-105"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" onClick={dismiss}>
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto"
+            style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.25s ease' }}
+          />
+          <div
+            className="relative glass-heavy rounded-3xl p-7 w-full max-w-sm mx-4 pointer-events-auto"
+            style={{
+              transform: visible ? 'translateY(0) scale(1)' : 'translateY(-40px) scale(0.97)',
+              opacity: visible ? 1 : 0,
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl border bg-[#5e5ce6]/10 border-[#5e5ce6]/30 flex items-center justify-center mx-auto mb-4">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5e5ce6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-[#1d1d1f] text-center tracking-tight mb-1">Exportă programări</h2>
+            <p className="text-sm text-[#6e6e73] text-center mb-5">Alege un interval sau exportă toate programările trecute.</p>
+
+            {/* mode switcher */}
+            <div className="bg-white/30 rounded-xl p-1 mb-4">
+              <div className="relative grid grid-cols-2">
+                {/* sliding indicator */}
+                <div
+                  className="absolute top-0 bottom-0 bg-white/80 rounded-lg shadow-sm pointer-events-none"
+                  style={{
+                    width: '50%',
+                    left: exportAll ? '50%' : '0%',
+                    transition: 'left 0.3s cubic-bezier(0.4,0,0.2,1)',
+                  }}
+                />
+                <button
+                  onClick={() => setExportAll(false)}
+                  className={`relative z-10 py-2 text-xs font-semibold rounded-lg border-none cursor-pointer transition-colors duration-200 ${!exportAll ? 'text-[#1d1d1f]' : 'text-[#6e6e73] hover:text-[#1d1d1f]'}`}
+                >
+                  Interval
+                </button>
+                <button
+                  onClick={() => setExportAll(true)}
+                  className={`relative z-10 py-2 text-xs font-semibold rounded-lg border-none cursor-pointer transition-colors duration-200 ${exportAll ? 'text-[#1d1d1f]' : 'text-[#6e6e73] hover:text-[#1d1d1f]'}`}
+                >
+                  Toate
+                </button>
+              </div>
+            </div>
+
+            {/* date range (animated expand / collapse) */}
+            <div
+              className="overflow-hidden"
+              style={{
+                maxHeight: exportAll ? 0 : 220,
+                opacity: exportAll ? 0 : 1,
+                marginBottom: exportAll ? 0 : 16,
+                transform: exportAll ? 'translateY(-8px)' : 'translateY(0)',
+                transition: 'max-height 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, transform 0.32s cubic-bezier(0.4,0,0.2,1), margin-bottom 0.32s cubic-bezier(0.4,0,0.2,1)',
+              }}
+            >
+              <div className="flex flex-col gap-3">
+                <label className="flex flex-col gap-1.5 cursor-pointer" onClick={openPicker}>
+                  <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">De la</span>
+                  <input type="date" value={start} max={end || undefined} onChange={(e) => setStart(e.target.value)} className={inputCls} />
+                </label>
+                <label className="flex flex-col gap-1.5 cursor-pointer" onClick={openPicker}>
+                  <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Până la</span>
+                  <input type="date" value={end} min={start || undefined} onChange={(e) => setEnd(e.target.value)} className={inputCls} />
+                </label>
+              </div>
+            </div>
+
+            {/* count */}
+            <div className="text-sm text-[#6e6e73] text-center mb-5">
+              <strong className="text-[#1d1d1f]">{selected.length}</strong> {selected.length === 1 ? 'programare' : 'programări'} de exportat
+            </div>
+
+            {/* actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={dismiss}
+                className="flex-1 rounded-full px-4 py-2.5 text-sm font-medium text-[#6e6e73] glass cursor-pointer border-none hover:scale-105 active:scale-95 transition-all"
+              >
+                Anulează
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={selected.length === 0}
+                className="flex-1 rounded-full px-4 py-2.5 text-sm font-semibold text-white border-none cursor-pointer transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:scale-100 bg-[#5e5ce6] hover:bg-[#4b48d6] shadow-[0_4px_16px_rgba(94,92,230,0.35)]"
+              >
+                Exportă
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
