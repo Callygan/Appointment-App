@@ -54,7 +54,7 @@
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
   background: #f8e0f8;
 }
 
@@ -83,7 +83,7 @@ body {
   color: #1d1d1f;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 input, select, textarea {
