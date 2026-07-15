@@ -5,6 +5,7 @@ import { BookingForm } from '../../components/BookingForm/BookingForm'
 import { SuccessPage } from '../SuccessPage/SuccessPage'
 import { useAvailableSlots } from '../../hooks/useAvailableSlots'
 import { useServices } from '../../hooks/useServices'
+import { isBookable } from '../../utils/dateUtils'
 import type { AvailableSlot } from '../../types'
 
 export function BookingPage() {
@@ -33,9 +34,7 @@ export function BookingPage() {
 
   const slotsForDay = selectedDate
     ? slots.filter(
-        (s) =>
-          s.date === selectedDate &&
-          new Date(`${s.date}T${s.start_time}`).getTime() >= Date.now() + 2 * 60 * 60 * 1000,
+        (s) => s.date === selectedDate && isBookable(s.date, s.start_time),
       )
     : []
 

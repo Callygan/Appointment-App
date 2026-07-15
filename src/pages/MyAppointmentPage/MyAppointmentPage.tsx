@@ -71,8 +71,10 @@ export function MyAppointmentPage() {
 
   const lock = readLock()
   const isLocked = lock.lockedUntil !== null && nowTs < lock.lockedUntil
+  const lockExpired = lock.lockedUntil !== null && nowTs >= lock.lockedUntil
   const lockMinutesLeft = isLocked ? Math.ceil((lock.lockedUntil! - nowTs) / 60000) : 0
-  const attempts = lock.attempts
+  // After a lockout expires, reset the counter so the user gets a fresh set of attempts.
+  const attempts = lockExpired ? 0 : lock.attempts
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()

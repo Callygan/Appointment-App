@@ -45,7 +45,7 @@ export function GdprTab() {
     const { data: old, error: err } = await supabase
       .from('appointments')
       .select('id, client_phone')
-      .neq('client_phone', 'Număr anonim')
+      .neq('client_phone', 'număr anonim')
       .or(`appointment_date.lt.${cutoffStr},available_slots.date.lt.${cutoffStr}`)
 
     if (err || !old) {
@@ -53,7 +53,7 @@ export function GdprTab() {
       const { data: old2, error: err2 } = await supabase
         .from('appointments')
         .select('id, client_phone')
-        .neq('client_phone', 'Număr anonim')
+        .neq('client_phone', 'număr anonim')
         .lt('appointment_date', cutoffStr)
 
       if (err2) {
@@ -102,7 +102,7 @@ export function GdprTab() {
     const { data: old, error: fetchErr } = await supabase
       .from('appointments')
       .select('id, client_phone')
-      .neq('client_phone', 'Număr anonim')
+      .neq('client_phone', 'număr anonim')
       .lt('appointment_date', cutoffStr)
 
     if (fetchErr || !old) {
@@ -177,7 +177,7 @@ export function GdprTab() {
       .from('appointments')
       .select('id, client_name, client_phone')
       .eq('client_phone', phone)
-      .neq('client_phone', 'Număr anonim')
+      .neq('client_phone', 'număr anonim')
 
     setSearching(false)
 
@@ -220,7 +220,7 @@ export function GdprTab() {
   return (
     <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl">
 
-    {/* ── Cerere individuală ── */}
+    {/* ── Individual request ── */}
     <div className="flex-1 glass rounded-2xl p-6 flex flex-col gap-5">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
@@ -348,7 +348,7 @@ export function GdprTab() {
       />
     )}
 
-    {/* ── Anonimizare în masă ── */}
+    {/* ── Bulk anonymization ── */}
     <div className="flex-1 glass rounded-2xl p-6 flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -445,7 +445,7 @@ export function GdprTab() {
         description={
           <>
             Vor fi anonimizate <strong className="text-[#1d1d1f]">{eligible?.count} înregistrări</strong>.{' '}
-            Datele personale (nume, telefon, Instagram) vor fi înlocuite cu <em>"Client anonim"</em>. Această acțiune este <strong>ireversibilă</strong>.
+            Datele personale (nume, telefon, Instagram) vor fi înlocuite cu <em>"client anonim"</em>. Această acțiune este <strong>ireversibilă</strong>.
           </>
         }
         confirmLabel="Da, anonimizează"

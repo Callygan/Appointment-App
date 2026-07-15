@@ -16,7 +16,7 @@ export interface StatAppointment {
 
 const toIsoDate = getDateStr
 
-/** Returnează data efectivă: câmpul salvat la ștergere sau data slotului activ */
+/** Returns the effective date: the field saved on deletion or the active slot's date */
 function effectiveDate(r: StatAppointment) {
   return r.appointment_date ?? r.available_slots?.date ?? null
 }
@@ -43,10 +43,10 @@ export interface StatsData {
 }
 
 function computeStats(allRows: StatAppointment[], from: string, to: string): StatsData {
-  // Toate confirmed cu dată validă (pentru analiză istorică)
+  // All confirmed with a valid date (for historical analysis)
   const allConfirmed = allRows.filter(r => r.status === 'confirmed' && effectiveDate(r) !== null)
 
-  // Filtrare în perioadă
+  // Filter within the period
   const active = allConfirmed.filter(r => {
     const d = effectiveDate(r)!
     return d >= from && d <= to
@@ -58,7 +58,7 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
 
   const estimatedRevenue = active.reduce((sum, r) => sum + (r.services?.price ?? 0), 0)
 
-  // Venit realizat = doar programări confirmate deja trecute
+  // Realized revenue = only confirmed appointments already in the past
   const today = toIsoDate(new Date())
   const nowMs = Date.now()
   const realizedRevenue = active.filter(r => {
@@ -74,12 +74,12 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     return false
   }).reduce((sum, r) => sum + (r.services?.price ?? 0), 0)
 
-  // Perioada anterioară (MTD vs prior MTD)
-  // Aliniază la ziua 1 a lunii anterioare, aceeași durată
+  // Previous period (MTD vs prior MTD)
+  // Align to day 1 of the previous month, same duration
   const fromDate = new Date(from)
   const toDate = new Date(to)
-  const dayFrom = fromDate.getDate()  // ziua din lună a lui "from" (ex: 1)
-  const dayTo = toDate.getDate()      // ziua din lună a lui "to" (ex: 23)
+  const dayFrom = fromDate.getDate()  // day of month of "from" (e.g. 1)
+  const dayTo = toDate.getDate()      // day of month of "to" (e.g. 23)
   const prevMonthFrom = new Date(fromDate.getFullYear(), fromDate.getMonth() - 1, dayFrom)
   const prevMonthTo = new Date(toDate.getFullYear(), toDate.getMonth() - 1, dayTo)
   const prevFromStr = toIsoDate(prevMonthFrom)
@@ -158,7 +158,7 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     .slice(0, 7)
     .map(([name, v]) => ({ name, ...v }))
 
-  // Clienți noi vs. reveniți
+  // New vs. returning clients
   const beforePeriod = new Set(
     allConfirmed.filter(r => effectiveDate(r)! < from).map(r => r.client_phone)
   )
@@ -173,7 +173,7 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     }
   }
 
-  // Top clienți în perioadă (excluși clienții anonimizați GDPR)
+  // Top clients in the period (excluding GDPR-anonymized clients)
   const clientMap = new Map<string, { name: string; phone: string; count: number }>()
   for (const r of active) {
     const phone = r.client_phone
@@ -185,7 +185,7 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     .sort((a, b) => b.count - a.count)
     .slice(0, 8)
 
-  // Interval mediu între vizite (toate timpurile, clienți cu 2+ vizite)
+  // Average interval between visits (all time, clients with 2+ visits)
   const visitsByPhone = new Map<string, string[]>()
   for (const r of allConfirmed) {
     const d = effectiveDate(r)!

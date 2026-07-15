@@ -77,13 +77,17 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       return
     }
 
-    // Fetch id + booking_number for subsequent updates
+    // Fetch id + booking_number for subsequent updates.
+    // Order by newest and take one row, in case the slot had a prior cancelled
+    // appointment with the same client name.
     const { data: apptData, error: fetchErr } = await supabase
       .from('appointments')
       .select('id, booking_number')
       .eq('slot_id', slot.id)
       .eq('client_name', name.trim())
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (fetchErr || !apptData) {
       if (import.meta.env.DEV) console.error('fetch appt after book_slot failed:', fetchErr)
@@ -94,7 +98,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
     const apptId = apptData.id
 
-    // Auto-confirm — dezactivat: book_slot inserează direct cu status='confirmed'
+    // Auto-confirm — disabled: book_slot inserts directly with status='confirmed'
     // await supabase
     //   .from('appointments')
     //   .update({ status: 'confirmed' })

@@ -16,7 +16,7 @@ export function Header() {
   const navRef = useRef<HTMLUListElement>(null)
   const [measures, setMeasures] = useState<{ left: number; width: number }[]>([])
 
-  // Măsoară pozițiile o singură dată după mount
+  // Measure the positions once after mount
   useLayoutEffect(() => {
     const ul = navRef.current
     if (!ul) return
