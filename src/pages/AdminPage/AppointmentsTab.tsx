@@ -214,7 +214,7 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
   }
 
   return (
-    <div className="overflow-x-auto overflow-y-auto max-h-[520px]">
+    <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-10 bg-white/60 backdrop-blur-sm">
           <tr className="border-b border-white/50">

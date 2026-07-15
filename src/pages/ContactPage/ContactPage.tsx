@@ -61,7 +61,7 @@ export function ContactPage() {
   }
 
   return (
-    <div className="flex flex-col items-center px-4 pt-[calc(7rem+env(safe-area-inset-top))] pb-16">
+    <div className="flex flex-col items-center px-4 pt-28 pb-16">
 
 
       <div className="w-full max-w-4xl">

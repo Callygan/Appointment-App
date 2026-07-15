@@ -64,7 +64,7 @@ export function BookingPage() {
   }
 
   return (
-    <div className="flex flex-col items-center px-4 pt-[calc(7rem+env(safe-area-inset-top))] pb-16">
+    <div className="flex flex-col items-center px-4 pt-28 pb-16">
       <header className="text-center mb-8">
         <h1 className="text-3xl font-semibold text-[#1d1d1f] tracking-tight mb-2">Fă-ți o programare</h1>
         <p className="text-sm text-[#6e6e73]">Selectează o zi disponibilă, apoi alege un interval orar.</p>
