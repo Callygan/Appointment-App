@@ -36,7 +36,7 @@ export function Footer() {
 
         {/* Bottom: copyright */}
         <p className="text-xs text-[#6e6e73]/50 mt-2 border-t border-white/30 pt-1 text-center">
-          © {new Date().getFullYear()}<span className="text-[#6e6e73]"> Nail Bar</span>. Powered by <a href="https://www.instagram.com/dumitrupodar/" target="_blank" rel="noreferrer" className="text-[#6e6e73] hover:text-[#1d1d1f] no-underline transition-colors">Dumitru Podar</a>.
+          © {new Date().getFullYear()}<span className="text-[#6e6e73]"> Nail Bar</span>. Toate drepturile rezervate. Powered by <a href="https://www.instagram.com/dumitrupodar/" target="_blank" rel="noreferrer" className="text-[#6e6e73] hover:text-[#1d1d1f] no-underline transition-colors">Dumitru Podar</a>.
         </p>
       </div>
     </footer>
