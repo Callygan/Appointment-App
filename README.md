@@ -213,6 +213,14 @@ index.html       # meta tags, favicons, Content-Security-Policy
 
 ---
 
+## 📄 License
+
+This project is **proprietary and confidential**. All rights reserved.
+See the [`LICENSE`](LICENSE) file for the full terms. No use, reproduction, or
+distribution is permitted without the copyright holder's prior written consent.
+
+---
+
 <div align="center">
 <sub>© Nail Bar — Private project. All rights reserved.</sub>
 </div>
