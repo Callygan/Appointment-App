@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { alertCls, adminInputCls, labelCls as baseLabelCls } from '../../components/ui/formStyles'
+import { adminInputCls, labelCls as baseLabelCls } from '../../components/ui/formStyles'
 import { greenBtnCls } from '../../components/ui/buttons'
 import { MonthCalendar } from '../../components/MonthCalendar/MonthCalendar'
 import { useAdminSlots } from '../../hooks/useAdminSlots'
@@ -168,7 +168,9 @@ export function SlotsTab() {
                 )
               })()}
             </label>
-            {message && <p className={alertCls(message.type)}>{message.text}</p>}
+            <p className={`text-xs text-center m-0 min-h-4 ${message ? (message.type === 'success' ? 'text-[#1a6b2e]' : 'text-red-600') : 'text-transparent'}`}>
+              {message?.text ?? '\u00A0'}
+            </p>
             <button type="submit" disabled={saving || !sDate || !sStart} className={submitBtnCls}>{saving ? 'Se salveaza...' : 'Adauga slot'}</button>
           </form>
         )}
@@ -212,7 +214,9 @@ export function SlotsTab() {
                 ))}
               </div>
             </div>
-            {message && <p className={alertCls(message.type)}>{message.text}</p>}
+            <p className={`text-xs text-center m-0 min-h-4 ${message ? (message.type === 'success' ? 'text-[#1a6b2e]' : 'text-red-600') : 'text-transparent'}`}>
+              {message?.text ?? '\u00A0'}
+            </p>
             <button type="submit" disabled={saving || !bFrom || !bTo || !bStart || !bEnd || bDays.length === 0} className={submitBtnCls}>{saving ? 'Se genereaza...' : 'Genereaza sloturi'}</button>
           </form>
         )}
