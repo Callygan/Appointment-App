@@ -29,14 +29,14 @@ export function Footer() {
               >
                 nail<span className="font-black">bar</span>
               </span>
-              {/* <span className="text-[7px] font-medium tracking-[0.3em] uppercase text-[#b0b0b8] group-hover:text-[#a855f7] transition-colors duration-300">by Daniela Cobosnean</span> */}
+              <span className="text-[7px] font-medium tracking-[0.3em] uppercase text-center text-[#b0b0b8] group-hover:text-[#a855f7] transition-colors duration-300">Powered by <br/> <a href="https://www.instagram.com/dumitrupodar/" target="_blank" rel="noreferrer" className="text-[#6e6e73] hover:text-[#1d1d1f] no-underline transition-colors">Dumitru Podar</a></span>
             </div>
           </a>
         </div>
 
         {/* Bottom: copyright */}
         <p className="text-xs text-[#6e6e73]/50 mt-2 border-t border-white/30 pt-1 text-center">
-          © {new Date().getFullYear()}<span className="text-[#6e6e73]"> Nail Bar</span>. Toate drepturile rezervate. Powered by <a href="https://www.instagram.com/dumitrupodar/" target="_blank" rel="noreferrer" className="text-[#6e6e73] hover:text-[#1d1d1f] no-underline transition-colors">Dumitru Podar</a>.
+          © {new Date().getFullYear()}<span className="text-[#6e6e73]"> Nail Bar</span>. Toate drepturile rezervate.
         </p>
       </div>
     </footer>
