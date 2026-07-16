@@ -63,21 +63,15 @@ html, body {
 }
 
 /* Fixed gradient as a real positioned layer (not background-attachment: fixed),
-   so backdrop-filter blurs it correctly on Chromium without transparency artifacts.
-   Gradient only on desktop; mobile keeps the solid html background (#f8e0f8)
-   to avoid iOS Safari backdrop-filter artifacts. */
+   so backdrop-filter blurs it correctly on Chromium without transparency artifacts. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
+  /* background: linear-gradient(135deg, #fce4f3 0%, #e8d5ff 30%, #d4eeff 65%, #e0ffe8 100%); */
+  /* background: #f8e0f8; */
   pointer-events: none;
-}
-
-@media (min-width: 768px) {
-  body::before {
-    background: linear-gradient(135deg, #f8e0f8 0%, #e3d0fc 30%, #d4eeff 65%, #d8faf0 100%);
-  }
 }
 
 body {
