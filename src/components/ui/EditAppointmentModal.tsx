@@ -31,14 +31,14 @@ export function EditAppointmentModal({ appointment, onDismiss, onSave }: EditApp
 
   const slotsRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (selectedDate) {
-      const t = setTimeout(() => {
-        slotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 120)
-      return () => clearTimeout(t)
-    }
-  }, [selectedDate])
+  // Scroll to the hours only when the user actively picks a date — never on open,
+  // so the popup always shows from the top (title).
+  function handleDaySelect(date: string) {
+    setSelectedDate(date)
+    setTimeout(() => {
+      slotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 120)
+  }
 
   useEffect(() => {
     const from = `${year}-${String(month).padStart(2, '0')}-01`
@@ -170,7 +170,7 @@ export function EditAppointmentModal({ appointment, onDismiss, onSave }: EditApp
               month={month}
               datesWithSlots={datesWithSlots}
               selectedDate={selectedDate}
-              onDaySelect={setSelectedDate}
+              onDaySelect={handleDaySelect}
               onPrev={handlePrev}
               onNext={handleNext}
               disablePrev={year === new Date().getFullYear() && month === new Date().getMonth() + 1}
