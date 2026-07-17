@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
 import { SlotsTab } from './SlotsTab'
@@ -59,6 +59,10 @@ export function AdminPage() {
   const { signOut } = useAuth()
   const [tab, setTab] = useState<TabId>('appointments')
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const tabIndex = TAB_ORDER.indexOf(tab)
 
