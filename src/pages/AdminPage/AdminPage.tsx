@@ -72,7 +72,7 @@ export function AdminPage() {
     <div className="min-h-screen px-4 py-8 pb-16">
       <div className="w-full">
         <header className="flex items-center justify-between mb-6 max-w-screen-2xl mx-auto">
-          <h1 className="text-3xl font-semibold pl-2 text-[#1d1d1f] tracking-tight m-0">Dashboardddd</h1>
+          <h1 className="text-3xl font-semibold pl-2 text-[#1d1d1f] tracking-tight m-0">Dashboard</h1>
           <button
             onClick={signOut}
             className="glass rounded-full px-4 py-2 text-sm text-[#6e6e73] cursor-pointer hover:scale-105 active:scale-95 transition-all border-none font-medium"
