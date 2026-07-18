@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAutoRefresh } from './useAutoRefresh'
 import type { Appointment } from '../types'
 
 export function useAppointments() {
@@ -41,6 +42,10 @@ export function useAppointments() {
         setLoading(false)
       })
   }, [])
+
+  // Refresh silently on interval and whenever the app regains focus / visibility
+  // (e.g. reopening the installed PWA) so new bookings show up without a manual reload.
+  useAutoRefresh(() => load(false), 30000)
 
   async function confirmAppointment(id: string) {
     await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', id)
