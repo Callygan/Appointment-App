@@ -4,6 +4,7 @@ import { useClickOutside } from '../../hooks/useClickOutside'
 import { STATUS_COLOR, STATUS_LABELS } from '../../utils/statusColors'
 import { Spinner } from '../../components/ui/Spinner'
 import { EditAppointmentModal } from '../../components/ui/EditAppointmentModal'
+import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import type { Appointment } from '../../types'
 
 type View = 'month' | 'week' | 'day'
@@ -81,11 +82,12 @@ function apptColor(a: Appointment) {
 
 
 export function CalendarTab() {
-  const { appointments, loading, updateAppointmentSchedule } = useAppointments()
+  const { appointments, loading, updateAppointmentSchedule, cancelAppointment } = useAppointments()
   const [view, setView] = useState<View>('month')
   const [current, setCurrent] = useState(new Date())
   const [selected, setSelected] = useState<Appointment | null>(null)
   const [editing, setEditing] = useState<Appointment | null>(null)
+  const [pendingCancel, setPendingCancel] = useState<{ id: string; slotId: string; name: string } | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerNav, setPickerNav] = useState(new Date())
   const pickerRef = useRef<HTMLDivElement>(null)
@@ -506,8 +508,13 @@ export function CalendarTab() {
             onClick={e => e.stopPropagation()}
           >
             {!isPastAppt(selected) && (
-              <button onClick={() => { setEditing(selected); setSelected(null) }} className="absolute top-4 right-12 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:text-[#34c759] hover:bg-black/15 transition-colors" aria-label="Editează data și ora" title="Editează data și ora">
+              <button onClick={() => { setEditing(selected); setSelected(null) }} className="absolute top-4 right-20 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:text-[#34c759] hover:bg-black/15 transition-colors" aria-label="Editează data și ora" title="Editează data și ora">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
+              </button>
+            )}
+            {!isPastAppt(selected) && (
+              <button onClick={() => { setPendingCancel({ id: selected.id, slotId: selected.slot_id ?? '', name: selected.client_name }); setSelected(null) }} className="absolute top-4 right-12 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:text-red-500 hover:bg-black/15 transition-colors" aria-label="Anulează programarea" title="Anulează programarea">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </button>
             )}
             <button onClick={() => setSelected(null)} className="absolute top-4 right-4 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center border-none cursor-pointer text-[#6e6e73] hover:bg-black/15 transition-colors">
@@ -599,6 +606,17 @@ export function CalendarTab() {
             if (!err) setSelected(null)
             return err
           }}
+        />
+      )}
+
+      {pendingCancel && (
+        <ConfirmModal
+          title="Anulezi programarea?"
+          description={<>Programarea lui <strong className="text-[#1d1d1f]">{pendingCancel.name}</strong> va fi anulată definitiv și intervalul orar va fi eliberat.</>}
+          confirmLabel="Da, anulează"
+          cancelLabel="Înapoi"
+          onConfirm={() => { cancelAppointment(pendingCancel.id, pendingCancel.slotId); setPendingCancel(null) }}
+          onDismiss={() => setPendingCancel(null)}
         />
       )}
     </div>
