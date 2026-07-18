@@ -24,10 +24,12 @@ export function validateEmail(email: string): string | null {
 
 export function validatePhone(dialCode: string, number: string): string | null {
   const clean = dialCode.trim()
-  const digits = number.replace(/\D/g, '')
-  if (!clean.startsWith('+') || clean.length < 2 || digits.length < 6)
+  const nationalDigits = number.replace(/\D/g, '')
+  const countryDigits = clean.replace(/\D/g, '') // digits of the country code, without the +
+  if (!clean.startsWith('+') || clean.length < 2 || nationalDigits.length < 6)
     return 'Număr de telefon invalid.'
-  if (digits.length > 15) return 'Număr de telefon prea lung.'
+  // E.164: country code + national number ≤ 15 digits in total.
+  if (countryDigits.length + nationalDigits.length > 15) return 'Număr de telefon prea lung.'
   return null
 }
 
@@ -41,6 +43,7 @@ export function capitalizeWords(value: string): string {
 }
 
 export function formatPhoneNumber(value: string): string {
-  const digits = value.replace(/\D/g, '')
+  // E.164 allows at most 15 digits for a full international number.
+  const digits = value.replace(/\D/g, '').slice(0, 12)
   return digits.replace(/(\d{3})(?=\d)/g, '$1 ')
 }
