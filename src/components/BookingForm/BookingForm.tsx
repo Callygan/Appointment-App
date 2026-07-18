@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Select } from '../Select/Select'
-import { validateName, validatePhone, capitalizeWords, formatPhoneNumber } from '../../utils/validation'
+import { validateName, validatePhone, capitalizeWords, formatPhoneNumber, sanitizeName } from '../../utils/validation'
 import { inputCls, labelCls, inputBorderCls } from '../ui/formStyles'
 import { greenBtnCls } from '../ui/buttons'
 import { formatTime, formatDate } from '../../utils/dateUtils'
@@ -18,7 +18,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
   const mainServices = services.filter((s) => s.service_type === 'main')
 
   const [name, setName] = useState('')
-  const [nameError, setNameError] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
   const [phoneDialCode, setPhoneDialCode] = useState('+40')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [phoneError, setPhoneError] = useState(false)
@@ -33,11 +33,12 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
     let hasError = false
 
-    if (validateName(name)) {
-      setNameError(true)
+    const nameErr = validateName(name)
+    if (nameErr) {
+      setNameError(nameErr)
       hasError = true
     } else {
-      setNameError(false)
+      setNameError(null)
     }
 
     if (validatePhone(phoneDialCode, phoneNumber)) {
@@ -161,14 +162,14 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
               type="text"
               value={name}
               onChange={(e) => {
-                  setName(capitalizeWords(e.target.value))
-                  setNameError(false)
+                  setName(capitalizeWords(sanitizeName(e.target.value)))
+                  setNameError(null)
                 }}
               autoComplete="name"
               placeholder="e.g. Maria Popescu"
-              className={`${inputCls} ${inputBorder(nameError)}`}
+              className={`${inputCls} ${inputBorder(Boolean(nameError))}`}
             />
-            <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${nameError ? 'visible' : 'invisible'}`}>Introdu numele complet (minim 5 caractere).</span>
+            <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${nameError ? 'visible' : 'invisible'}`}>{nameError ?? 'Introdu numele complet (minim 5 caractere).'}</span>
           </label>
 
           <label className={labelCls}>
