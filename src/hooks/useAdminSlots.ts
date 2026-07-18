@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAutoRefresh } from './useAutoRefresh'
 import type { AvailableSlot } from '../types'
 
 export function useAdminSlots(year: number, month: number) {
@@ -10,7 +11,7 @@ export function useAdminSlots(year: number, month: number) {
 
   const refresh = useCallback(() => setTick(t => t + 1), [])
 
-  useEffect(() => {
+  const loadSlots = useCallback((showLoading = true) => {
     const from = `${year}-${String(month).padStart(2, '0')}-01`
     const lastDay = new Date(year, month, 0).getDate()
     const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
@@ -18,10 +19,10 @@ export function useAdminSlots(year: number, month: number) {
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     const effectiveFrom = from < todayStr ? todayStr : from
 
-    queueMicrotask(() => {
+    if (showLoading) {
       setLoading(true)
       setError(null)
-    })
+    }
 
     supabase
       .from('available_slots')
@@ -35,7 +36,14 @@ export function useAdminSlots(year: number, month: number) {
         else setSlots(data ?? [])
         setLoading(false)
       })
-  }, [year, month, tick])
+  }, [year, month])
+
+  useEffect(() => {
+    loadSlots(true)
+  }, [loadSlots, tick])
+
+  // Silent refresh on interval and when the app regains focus / visibility.
+  useAutoRefresh(() => loadSlots(false), 30000)
 
   const datesWithSlots = new Set(slots.map(s => s.date))
 
