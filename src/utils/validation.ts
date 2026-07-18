@@ -4,7 +4,14 @@ export function validateName(name: string): string | null {
   const trimmed = name.trim()
   if (trimmed.length < 5) return 'Introdu numele complet (minim 5 caractere).'
   if (trimmed.length > 100) return 'Numele este prea lung (maxim 100 caractere).'
+  if (!/^[\p{L} .-]+$/u.test(trimmed)) return 'Numele poate conține doar litere, spații, cratimă și punct.'
+  if (!/\p{L}/u.test(trimmed)) return 'Introdu un nume valid.'
   return null
+}
+
+/** Removes characters that are not letters, spaces, hyphens or dots. */
+export function sanitizeName(value: string): string {
+  return value.replace(/[^\p{L} .-]/gu, '')
 }
 
 export function validateEmail(email: string): string | null {
