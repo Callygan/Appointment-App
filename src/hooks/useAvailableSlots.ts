@@ -1,25 +1,23 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { isBookable } from '../utils/dateUtils'
+import { useAutoRefresh } from './useAutoRefresh'
 import type { AvailableSlot } from '../types'
 
 export function useAvailableSlots(year: number, month: number) {
   const [slots, setSlots] = useState<AvailableSlot[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tick, setTick] = useState(0)
 
-  const refresh = useCallback(() => setTick(t => t + 1), [])
-
-  useEffect(() => {
+  const load = useCallback((showLoading = true) => {
     const from = `${year}-${String(month).padStart(2, '0')}-01`
     const lastDay = new Date(year, month, 0).getDate()
     const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 
-    queueMicrotask(() => {
+    if (showLoading) {
       setLoading(true)
       setError(null)
-    })
+    }
 
     supabase
       .from('available_slots')
@@ -34,7 +32,18 @@ export function useAvailableSlots(year: number, month: number) {
         else setSlots(data ?? [])
         setLoading(false)
       })
-  }, [year, month, tick])
+  }, [year, month])
+
+  useEffect(() => {
+    load(true)
+  }, [load])
+
+  // Refresh silently on interval and whenever the app regains focus / visibility
+  // (e.g. reopening the installed PWA) so slots booked or freed by others show up
+  // without a manual reload — no spinner flicker.
+  useAutoRefresh(() => load(false), 15000)
+
+  const refresh = useCallback(() => load(false), [load])
 
   // Returns a Set of date strings ('YYYY-MM-DD') that have free, still-bookable
   // slots (at least 2 hours from now)
