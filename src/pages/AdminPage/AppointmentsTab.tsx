@@ -46,16 +46,34 @@ export function AppointmentsTab() {
     )
   }
 
-  const pending = appointments.filter((a) => a.status === 'pending' && matchesSearch(a))
-  const upcoming = appointments.filter((a) => {
-    const d = effectiveDate(a)
-    return a.status === 'confirmed' && d !== null && !isAppointmentPast(a) && matchesSearch(a)
-  })
-  const past = appointments.filter((a) => {
-    const d = effectiveDate(a)
-    return a.status === 'confirmed' && d !== null && isAppointmentPast(a) && matchesSearch(a)
-  })
-  const cancelled = appointments.filter((a) => a.status === 'cancelled' && matchesSearch(a))
+  const effectiveStartTime = (a: typeof appointments[0]) =>
+    a.available_slots?.start_time ?? a.appointment_time ?? ''
+
+  // Sort by appointment date + start time, ascending (nearest first).
+  const byDateTimeAsc = (a: typeof appointments[0], b: typeof appointments[0]) => {
+    const ka = `${effectiveDate(a) ?? ''} ${effectiveStartTime(a)}`
+    const kb = `${effectiveDate(b) ?? ''} ${effectiveStartTime(b)}`
+    return ka < kb ? -1 : ka > kb ? 1 : 0
+  }
+
+  const pending = appointments
+    .filter((a) => a.status === 'pending' && matchesSearch(a))
+    .sort(byDateTimeAsc)
+  const upcoming = appointments
+    .filter((a) => {
+      const d = effectiveDate(a)
+      return a.status === 'confirmed' && d !== null && !isAppointmentPast(a) && matchesSearch(a)
+    })
+    .sort(byDateTimeAsc)
+  const past = appointments
+    .filter((a) => {
+      const d = effectiveDate(a)
+      return a.status === 'confirmed' && d !== null && isAppointmentPast(a) && matchesSearch(a)
+    })
+    .sort((a, b) => -byDateTimeAsc(a, b))
+  const cancelled = appointments
+    .filter((a) => a.status === 'cancelled' && matchesSearch(a))
+    .sort((a, b) => -byDateTimeAsc(a, b))
 
   if (error) return <p className="text-sm text-red-500 mb-4">Eroare: {error}</p>
   if (loading) return <p className="text-sm text-[#6e6e73] mb-4">Se încarcă programările...</p>
@@ -201,13 +219,13 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
   const hasActions = showEdit || showCancel || showConfirm
 
   const COLS: { label: string; key?: SortKey }[] = [
-    { label: 'Nr.', key: 'booking_number' },
+    { label: 'Nume', key: 'client_name' },
     { label: 'Dată', key: 'date' },
     { label: 'Oră', key: 'time' },
-    { label: 'Nume', key: 'client_name' },
     { label: 'Telefon' },
     { label: 'Instagram' },
     { label: 'Serviciu', key: 'service' },
+    { label: 'Nr.', key: 'booking_number' },
     ...(hasActions ? [{ label: '' }] : []),
   ]
 
@@ -247,15 +265,14 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
         </thead>
         <tbody>
           {sorted.map((a) => (
-            <tr key={a.id} className={`border-b border-white/30 last:border-0 hover:bg-white/20 transition-colors ${a.status === 'cancelled' ? 'opacity-40' : ''}`}>
-              <td className="px-4 py-3 text-xs font-semibold text-center text-[#6e6e73] w-8 tabular-nums">#{a.booking_number}</td>
+            <tr key={a.id} className={`border-b border-white/30 last:border-0 even:bg-black/[0.025] hover:bg-white/20 transition-colors ${a.status === 'cancelled' ? 'opacity-40' : ''}`}>
+              <td className="px-4 py-3 text-[#1d1d1f]">{a.client_name}</td>
               <td className="px-4 py-3 text-[#1d1d1f] whitespace-nowrap">
                 {a.available_slots ? formatDate(a.available_slots.date) : a.appointment_date ? formatDate(a.appointment_date) : '—'}
               </td>
               <td className="px-4 py-3 text-[#1d1d1f] whitespace-nowrap">
                 {a.available_slots ? formatTime(a.available_slots.start_time) : a.appointment_time ? formatTime(a.appointment_time) : '—'}
               </td>
-              <td className="px-4 py-3 text-[#1d1d1f]">{a.client_name}</td>
               <td className="px-4 py-3">
                 <a href={`tel:${a.client_phone}`} className="text-[#34c759] no-underline hover:underline">{a.client_phone}</a>
               </td>
@@ -265,6 +282,7 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
                   : <span className="text-[#6e6e73]/40">—</span>}
               </td>
               <td className="px-4 py-3 text-[#1d1d1f]">{a.services?.name ?? <span className="text-[#6e6e73]/40">—</span>}</td>
+              <td className="px-4 py-3 text-xs font-semibold text-center text-[#6e6e73] w-8 tabular-nums">#{a.booking_number}</td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">
                   {showEdit && (
