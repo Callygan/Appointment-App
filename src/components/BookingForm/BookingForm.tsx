@@ -66,6 +66,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       p_client_name: name.trim(),
       p_client_phone: fullPhone,
       p_service_id: serviceId || null,
+      p_client_instagram: instagram.trim() || null,
     })
 
     if (rpcError) {
@@ -78,12 +79,12 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       return
     }
 
-    // Fetch id + booking_number for subsequent updates.
+    // Fetch booking_number to show on the success screen.
     // Order by newest and take one row, in case the slot had a prior cancelled
     // appointment with the same client name.
     const { data: apptData, error: fetchErr } = await supabase
       .from('appointments')
-      .select('id, booking_number')
+      .select('booking_number')
       .eq('slot_id', slot.id)
       .eq('client_name', name.trim())
       .order('created_at', { ascending: false })
@@ -95,21 +96,6 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       setError('Rezervarea a fost creată, dar a apărut o eroare. Contactează salonul cu numele și ora aleasă.')
       setSubmitting(false)
       return
-    }
-
-    const apptId = apptData.id
-
-    // Auto-confirm — disabled: book_slot inserts directly with status='confirmed'
-    // await supabase
-    //   .from('appointments')
-    //   .update({ status: 'confirmed' })
-    //   .eq('id', apptId)
-
-    if (instagram.trim()) {
-      await supabase
-        .from('appointments')
-        .update({ client_instagram: instagram.trim() })
-        .eq('id', apptId)
     }
 
     onSuccess(apptData.booking_number)
