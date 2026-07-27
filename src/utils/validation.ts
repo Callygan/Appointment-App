@@ -14,6 +14,28 @@ export function sanitizeName(value: string): string {
   return value.replace(/[^\p{L} .-]/gu, '')
 }
 
+/**
+ * Live-sanitizes an Instagram username: extracts the handle from a pasted
+ * profile URL or leading @, forces lowercase, keeps only [a-z0-9._], removes
+ * leading dots and collapses consecutive dots, max 30 chars. A single trailing
+ * dot is intentionally kept so the user can still type dots mid-word; strip it
+ * before saving with `.replace(/\.+$/, '')`.
+ */
+export function sanitizeInstagram(value: string): string {
+  let v = value.trim()
+  // If a full profile URL was pasted, keep only the username segment.
+  const urlMatch = v.match(/(?:instagram\.com|instagr\.am)\/([^/?#\s]+)/i)
+  if (urlMatch) v = urlMatch[1]
+  // Drop a leading @ if present.
+  v = v.replace(/^@+/, '')
+  return v
+    .toLowerCase()
+    .replace(/[^a-z0-9._]/g, '')
+    .replace(/^\.+/, '')
+    .replace(/\.{2,}/g, '.')
+    .slice(0, 30)
+}
+
 export function validateEmail(email: string): string | null {
   // local part cannot start or end with dot, no consecutive dots, valid domain
   const re = /^[a-zA-Z0-9]([a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/
