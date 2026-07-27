@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Select } from '../Select/Select'
-import { validateName, validatePhone, capitalizeWords, formatPhoneNumber, sanitizeName } from '../../utils/validation'
+import { validateName, validatePhone, capitalizeWords, formatPhoneNumber, sanitizeName, sanitizeInstagram } from '../../utils/validation'
 import { inputCls, labelCls, inputBorderCls } from '../ui/formStyles'
 import { greenBtnCls } from '../ui/buttons'
 import { formatTime, formatDate } from '../../utils/dateUtils'
@@ -66,7 +66,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       p_client_name: name.trim(),
       p_client_phone: fullPhone,
       p_service_id: serviceId || null,
-      p_client_instagram: instagram.trim() || null,
+      p_client_instagram: instagram.replace(/\.+$/, '') || null,
     })
 
     if (rpcError) {
@@ -192,11 +192,13 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
                 type="text"
                 value={instagram}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/[^a-zA-Z0-9_.]/g, '').slice(0, 30)
-                  setInstagram(val)
+                  setInstagram(sanitizeInstagram(e.target.value))
                 }}
                 placeholder="username"
                 autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="flex-1 px-3 py-3 text-sm font-normal text-[#1d1d1f] bg-transparent outline-none"
               />
             </div>
