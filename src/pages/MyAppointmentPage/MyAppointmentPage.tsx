@@ -5,22 +5,16 @@ import { STATUS_COLOR, STATUS_LABELS, type AppointmentStatus } from '../../utils
 import { greenBtnCls } from '../../components/ui/buttons'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { formatDate, formatTime } from '../../utils/dateUtils'
+import { RescheduleModal } from '../../components/ui/RescheduleModal'
+import type { AvailableSlot } from '../../types'
 
 interface AppointmentInfo {
-  id: string
-  slot_id: string | null
   booking_number: number
   client_name: string
   status: AppointmentStatus
-  appointment_date?: string
-  appointment_time?: string
-  available_slots: {
-    date: string
-    start_time: string
-  } | null
-  services: {
-    name: string
-  } | null
+  appointment_date: string | null
+  appointment_time: string | null
+  service_name: string | null
 }
 
 const STATUS_CONFIG = STATUS_COLOR
@@ -34,6 +28,7 @@ export function MyAppointmentPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelled, setCancelled] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showReschedule, setShowReschedule] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [nowTs, setNowTs] = useState(() => Date.now())
 
@@ -89,29 +84,15 @@ export function MyAppointmentPage() {
     setError(null)
     setCancelled(false)
 
-    const { data, error: searchErr } = await supabase
-      .from('appointments')
-      .select(`
-        id, slot_id, booking_number, client_name, client_phone, status,
-        appointment_date, appointment_time,
-        available_slots ( date, start_time ),
-        services ( name )
-      `)
-      .eq('booking_number', num)
-      .single()
+    const { data, error: searchErr } = await supabase.rpc('find_appointment', {
+      p_booking_number: num,
+      p_phone_last4: last4,
+    })
 
     setLoading(false)
 
-    if (searchErr || !data) {
-      const newAttempts = attempts + 1
-      writeLock(newAttempts, newAttempts >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_MS : null)
-      setNotFound(true)
-      return
-    }
-
-    // Verify last 4 digits of phone match
-    const storedLast4 = (data.client_phone as string ?? '').replace(/\D/g, '').slice(-4)
-    if (storedLast4 !== last4) {
+    const found = Array.isArray(data) ? data[0] : data
+    if (searchErr || !found) {
       const newAttempts = attempts + 1
       writeLock(newAttempts, newAttempts >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_MS : null)
       setNotFound(true)
@@ -119,32 +100,63 @@ export function MyAppointmentPage() {
     }
 
     localStorage.removeItem(LS_KEY)
-    setAppointment(data as unknown as AppointmentInfo)
+    setAppointment(found as AppointmentInfo)
   }
 
   async function handleCancel() {
     if (!appointment) return
     setCancelling(true)
     setShowCancelModal(false)
-    const { error: cancelErr } = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', appointment.id)
-    if (cancelErr) { setError('A apărut o eroare la anulare. Încearcă din nou.'); setCancelling(false); return }
-    if (appointment.slot_id) {
-      const { error: slotErr } = await supabase.from('available_slots').update({ is_booked: false }).eq('id', appointment.slot_id)
-      if (slotErr) {
-        if (import.meta.env.DEV) console.error('slot free error:', slotErr)
-        setError('Programarea a fost anulată, dar slotul nu s-a eliberat automat. Contactează salonul.')
-        setCancelling(false)
-        setAppointment({ ...appointment, status: 'cancelled' })
-        setCancelled(true)
-        return
-      }
+    const last4 = phoneVerify.replace(/\D/g, '').slice(-4)
+    const { data: ok, error: cancelErr } = await supabase.rpc('cancel_appointment', {
+      p_booking_number: appointment.booking_number,
+      p_phone_last4: last4,
+    })
+    if (cancelErr || ok !== true) {
+      setError('A apărut o eroare la anulare. Încearcă din nou.')
+      setCancelling(false)
+      return
     }
     setCancelling(false)
     setCancelled(true)
     setAppointment({ ...appointment, status: 'cancelled' })
   }
 
+  async function handleReschedule(slot: AvailableSlot): Promise<string | null> {
+    if (!appointment) return 'Programare lipsă.'
+    setError(null)
+    const last4 = phoneVerify.replace(/\D/g, '').slice(-4)
+    const { data, error: rescheduleErr } = await supabase.rpc('reschedule_appointment', {
+      p_booking_number: appointment.booking_number,
+      p_phone_last4: last4,
+      p_new_slot_id: slot.id,
+    })
+    if (rescheduleErr) return 'A apărut o eroare. Încearcă din nou.'
+    const res = data as { ok: boolean; reason?: string; date?: string; time?: string } | null
+    if (!res?.ok) {
+      switch (res?.reason) {
+        case 'slot_taken': return 'Intervalul tocmai a fost rezervat. Alege altul.'
+        case 'same_slot': return 'Este intervalul actual. Alege altul.'
+        case 'not_active': return 'Programarea nu mai poate fi modificată.'
+        case 'too_late': return 'Modificarea este posibilă doar cu cel puțin 24 de ore înainte de programare.'
+        default: return 'Nu am putut modifica programarea. Verifică datele.'
+      }
+    }
+    setAppointment({
+      ...appointment,
+      appointment_date: res.date ?? appointment.appointment_date,
+      appointment_time: res.time ?? appointment.appointment_time,
+    })
+    return null
+  }
+
   const status = appointment ? STATUS_CONFIG[appointment.status] : null
+
+  const hoursUntilAppointment =
+    appointment?.appointment_date && appointment?.appointment_time
+      ? (new Date(`${appointment.appointment_date}T${appointment.appointment_time}`).getTime() - nowTs) / 3600000
+      : null
+  const canReschedule = hoursUntilAppointment !== null && hoursUntilAppointment >= 24
 
   return (
     <div className="flex flex-col items-center px-4 pt-6 md:pt-28 pb-16">
@@ -251,30 +263,30 @@ export function MyAppointmentPage() {
                 <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Nume</span>
                 <span className="text-sm text-[#1d1d1f]">{appointment.client_name}</span>
               </div>
-              {(appointment.available_slots || (appointment.appointment_date && appointment.appointment_time)) && (
+              {appointment.appointment_date && appointment.appointment_time && (
                 <>
                   <div className="h-px bg-white/40" />
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Dată</span>
                     <span className="text-sm text-[#1d1d1f]">
-                      {formatDate(appointment.available_slots?.date ?? appointment.appointment_date!)}
+                      {formatDate(appointment.appointment_date)}
                     </span>
                   </div>
                   <div className="h-px bg-white/40" />
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Oră</span>
                     <span className="text-sm text-[#1d1d1f]">
-                      {formatTime(appointment.available_slots?.start_time ?? appointment.appointment_time!)}
+                      {formatTime(appointment.appointment_time)}
                     </span>
                   </div>
                 </>
               )}
-              {appointment.services && (
+              {appointment.service_name && (
                 <>
                   <div className="h-px bg-white/40" />
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">Serviciu</span>
-                    <span className="text-sm text-[#1d1d1f]">{appointment.services.name}</span>
+                    <span className="text-sm text-[#1d1d1f]">{appointment.service_name}</span>
                   </div>
                 </>
               )}
@@ -284,13 +296,29 @@ export function MyAppointmentPage() {
             {(appointment.status === 'pending' || appointment.status === 'confirmed') && !cancelled && (
               <div className="px-6 pb-5">
                 {error && <p className="text-xs text-red-500 mb-3 text-center">{error}</p>}
-                <button
-                  onClick={() => setShowCancelModal(true)}
-                  disabled={cancelling}
-                  className="w-full rounded-full px-6 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 border-none cursor-pointer transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 shadow-[0_4px_16px_rgba(239,68,68,0.3)]"
-                >
-                  {cancelling ? 'Se anulează...' : 'Anulează programarea'}
-                </button>
+                <div className="flex gap-2">
+                  {canReschedule && (
+                    <button
+                      onClick={() => setShowReschedule(true)}
+                      disabled={cancelling}
+                      className="flex-1 rounded-full px-6 py-2.5 text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 border-none cursor-pointer transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 shadow-[0_4px_16px_rgba(249,115,22,0.3)]"
+                    >
+                      Modifică
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    disabled={cancelling}
+                    className="flex-1 rounded-full px-6 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 border-none cursor-pointer transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 shadow-[0_4px_16px_rgba(239,68,68,0.3)]"
+                  >
+                    {cancelling ? 'Se anulează...' : 'Anulează'}
+                  </button>
+                </div>
+                {!canReschedule && (
+                  <p className="text-xs text-[#6e6e73] text-center mt-2">
+                    Modificarea este posibilă doar cu cel puțin 24 de ore înainte de programare.
+                  </p>
+                )}
               </div>
             )}
 
@@ -312,6 +340,14 @@ export function MyAppointmentPage() {
           cancelLabel="Înapoi"
           onConfirm={handleCancel}
           onDismiss={() => setShowCancelModal(false)}
+        />
+      )}
+
+      {/* Reschedule modal */}
+      {showReschedule && appointment && (
+        <RescheduleModal
+          onDismiss={() => setShowReschedule(false)}
+          onConfirm={handleReschedule}
         />
       )}
     </div>
