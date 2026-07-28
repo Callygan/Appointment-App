@@ -11,7 +11,7 @@ const StatisticsTab = lazy(() => import('./StatisticsTab').then(m => ({ default:
 
 type TabId = 'appointments' | 'calendar' | 'slots' | 'services' | 'statistics' | 'gdpr'
 
-const TAB_ORDER: TabId[] = ['calendar', 'appointments', 'slots', 'services', 'statistics', 'gdpr']
+const TAB_ORDER: TabId[] = ['appointments', 'calendar', 'slots', 'services', 'statistics', 'gdpr']
 const TAB_LABELS: Record<TabId, string> = {
   appointments: 'Programări',
   calendar: 'Calendar',
@@ -57,7 +57,7 @@ function TabIcon({ id }: { id: TabId }) {
 
 export function AdminPage() {
   const { signOut } = useAuth()
-  const [tab, setTab] = useState<TabId>('calendar')
+  const [tab, setTab] = useState<TabId>('appointments')
   const [menuOpen, setMenuOpen] = useState(false)
 
   const tabIndex = TAB_ORDER.indexOf(tab)
