@@ -61,7 +61,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
     const fullPhone = phoneDialCode.trim() + phoneNumber.replace(/\D/g, '')
 
-    const { error: rpcError } = await supabase.rpc('book_slot', {
+    const { data: bookingNumber, error: rpcError } = await supabase.rpc('book_slot', {
       p_slot_id: slot.id,
       p_client_name: name.trim(),
       p_client_phone: fullPhone,
@@ -79,26 +79,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       return
     }
 
-    // Fetch booking_number to show on the success screen.
-    // Order by newest and take one row, in case the slot had a prior cancelled
-    // appointment with the same client name.
-    const { data: apptData, error: fetchErr } = await supabase
-      .from('appointments')
-      .select('booking_number')
-      .eq('slot_id', slot.id)
-      .eq('client_name', name.trim())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (fetchErr || !apptData) {
-      if (import.meta.env.DEV) console.error('fetch appt after book_slot failed:', fetchErr)
-      setError('Rezervarea a fost creată, dar a apărut o eroare. Contactează salonul cu numele și ora aleasă.')
-      setSubmitting(false)
-      return
-    }
-
-    onSuccess(apptData.booking_number)
+    onSuccess(bookingNumber as number)
   }
 
   const [visible, setVisible] = useState(false)
