@@ -27,22 +27,14 @@ function apptTime(a: Appointment): string {
   return (a.available_slots?.start_time ?? a.appointment_time ?? '').slice(0, 5)
 }
 
-// Monday-first week array for a month, including the leading/trailing days from
-// the adjacent months so the grid is always full (6 or fewer complete weeks).
-function buildMonthGrid(year: number, month: number): Date[] {
+// Monday-first week array for a month
+function buildMonthGrid(year: number, month: number): (Date | null)[] {
   const first = new Date(year, month, 1)
   const last = new Date(year, month + 1, 0)
   const startDow = (first.getDay() + 6) % 7 // 0=Mon
-  const grid: Date[] = []
-  // leading days from the previous month
-  for (let i = startDow; i > 0; i--) grid.push(new Date(year, month, 1 - i))
-  // current month days
+  const grid: (Date | null)[] = Array(startDow).fill(null)
   for (let d = 1; d <= last.getDate(); d++) grid.push(new Date(year, month, d))
-  // trailing days from the next month to complete the last week
-  while (grid.length % 7 !== 0) {
-    const lastDate = grid[grid.length - 1]
-    grid.push(new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate() + 1))
-  }
+  while (grid.length % 7 !== 0) grid.push(null)
   return grid
 }
 
@@ -145,15 +137,11 @@ export function CalendarTab() {
   }, [view, current])
 
   // ── chip component ───────────────────────────────────────────
-  function renderChip(a: Appointment, showTime?: boolean, jumpToMonth?: Date) {
+  function renderChip(a: Appointment, showTime?: boolean) {
     const c = apptColor(a)
     return (
       <button
-        onClick={(e) => {
-          e.stopPropagation()
-          if (jumpToMonth) setCurrent(jumpToMonth) // jump to that month, keep month view
-          else setSelected(a)
-        }}
+        onClick={(e) => { e.stopPropagation(); setSelected(a) }}
         className={`w-full text-left rounded-lg px-2 py-0.5 text-[11px] font-medium truncate border-none cursor-pointer transition-all hover:scale-[1.02] ${c.bg} ${c.text}`}
       >
         {showTime && <>{apptTime(a)} </>}{a.client_name}
@@ -174,7 +162,8 @@ export function CalendarTab() {
         </div>
         {/* grid */}
         <div className="grid grid-cols-7">
-          {grid.map((day) => {
+          {grid.map((day, i) => {
+            if (!day) return <div key={`e-${i}`} className="min-h-[110px] border-b border-r border-black/8 bg-black/[0.02]" />
             const ds = getDateStr(day)
             const isToday = ds === todayStr
             const isOtherMonth = day.getMonth() !== current.getMonth()
@@ -183,17 +172,14 @@ export function CalendarTab() {
             return (
               <div
                 key={ds}
-                onClick={() => {
-                  if (isOtherMonth) setCurrent(day) // jump to that month, keep month view
-                  else { setCurrent(day); setView('day') }
-                }}
-                className={`min-h-[110px] border-b border-r border-black/8 p-1.5 flex flex-col gap-1 cursor-pointer hover:bg-black/[0.03] transition-colors ${isOtherMonth ? 'opacity-40 bg-black/[0.02]' : ''}`}
+                onClick={() => { setCurrent(day); setView('day') }}
+                className={`min-h-[110px] border-b border-r border-black/8 p-1.5 flex flex-col gap-1 cursor-pointer hover:bg-black/[0.03] transition-colors ${isOtherMonth ? 'opacity-40' : ''}`}
               >
                 <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full self-end ${isToday ? 'bg-[#f43f5e] text-white' : isWeekend ? 'text-[#f43f5e]' : 'text-[#1d1d1f]'}`}>
                   {day.getDate()}
                 </span>
                 <div className="flex flex-col gap-0.5">
-                  {appts.slice(0, 3).map(a => <span key={a.id}>{renderChip(a, true, isOtherMonth ? day : undefined)}</span>)}
+                  {appts.slice(0, 3).map(a => <span key={a.id}>{renderChip(a, true)}</span>)}
                   {appts.length > 3 && (
                     <span className="text-[10px] text-[#6e6e73] px-1">+{appts.length - 3} mai mult</span>
                   )}
@@ -266,8 +252,8 @@ export function CalendarTab() {
                         className={`absolute flex flex-col justify-center px-1.5 border-none cursor-pointer hover:brightness-95 rounded-md z-10 ${c.bg}`}
                         style={{ top: top + 1, height, left: 2, right: 2 }}
                       >
-                        <span className={`text-[11px] font-medium truncate w-full ${c.text}`}>{a.client_name}</span>
-                        {a.services?.name && height > 34 && <span className="text-[10px] text-[#6e6e73] truncate w-full">{a.services.name}</span>}
+                        <span className={`text-[11px] font-medium w-full overflow-hidden whitespace-nowrap ${c.text}`} style={{ textOverflow: "'.'" }}>{a.client_name}</span>
+                        {height > 34 && <span className="text-[10px] text-[#6e6e73] truncate w-full">{apptTime(a)}</span>}
                       </button>
                     )
                   })}
@@ -310,7 +296,7 @@ export function CalendarTab() {
               const c = apptColor(a)
               const [sh, sm] = apptTime(a).split(':').map(Number)
               const top = ((sh - HOURS[0]) + sm / 60) * ROW_H
-              const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 32)
+              const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 40)
               return (
                 <button
                   key={a.id}
@@ -319,10 +305,10 @@ export function CalendarTab() {
                   style={{ top: top + 1, height, left: 4, right: 4 }}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className={`text-sm font-medium ${c.text}`}>{a.client_name}</p>
-                    {a.services?.name && height > 44 && <span className="text-[10px] text-[#6e6e73] truncate">{a.services.name}</span>}
+                    <p className={`text-sm font-medium leading-tight ${c.text}`}>{a.client_name}</p>
+                    {a.services?.name && height > 44 && <span className="text-[10px] text-[#6e6e73] truncate leading-tight">{a.services.name}</span>}
                   </div>
-                  {a.client_phone && height > 54 && <p className="text-[11px] text-[#6e6e73]">{a.client_phone}</p>}
+                  <span className="text-[11px] text-[#6e6e73] leading-tight">{apptTime(a)}</span>
                 </button>
               )
             })}
