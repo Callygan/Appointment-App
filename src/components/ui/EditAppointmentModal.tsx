@@ -53,41 +53,60 @@ export function EditAppointmentModal({ appointment, onDismiss, onSave }: EditApp
       setLoadError(null)
     })
 
-    Promise.all([
-      supabase
-        .from('available_slots')
-        .select('*')
-        .gte('date', effectiveFrom)
-        .lte('date', to)
-        .order('date')
-        .order('start_time'),
-      supabase
-        .from('appointments')
-        .select('id, slot_id, client_name, status')
-        .in('status', ['pending', 'confirmed'])
-        .gte('appointment_date', effectiveFrom)
-        .lte('appointment_date', to),
-    ]).then(([slotsRes, apptsRes]) => {
-      if (slotsRes.error || apptsRes.error) {
-        setLoadError('Nu s-au putut încărca sloturile.')
-        setSlots([])
-        setOccupiedBySlotId({})
+    supabase
+      .from('available_slots')
+      .select('*')
+      .gte('date', effectiveFrom)
+      .lte('date', to)
+      .order('date')
+      .order('start_time')
+      .then(async (slotsRes) => {
+        if (slotsRes.error) {
+          setLoadError('Nu s-au putut încărca sloturile.')
+          setSlots([])
+          setOccupiedBySlotId({})
+          setLoading(false)
+          return
+        }
+
+        const allSlotsData = slotsRes.data ?? []
+        const slotIds = allSlotsData.map(s => s.id)
+
+        // Match occupied appointments by slot_id (NOT appointment_date): client
+        // bookings made via book_slot leave appointment_date NULL, so filtering by
+        // date would hide them and occupied slots would only show intermittently.
+        const apptsRes = slotIds.length
+          ? await supabase
+              .from('appointments')
+              .select('id, slot_id, client_name, status')
+              .in('status', ['pending', 'confirmed'])
+              .in('slot_id', slotIds)
+          : { data: [], error: null }
+
+        if (apptsRes.error) {
+          setLoadError('Nu s-au putut încărca sloturile.')
+          setSlots([])
+          setOccupiedBySlotId({})
+          setLoading(false)
+          return
+        }
+
+        const nowMs = Date.now()
+        const allSlots = allSlotsData
+          .filter(s => s.id !== appointment.slot_id)
+          // Hide slots whose time has already passed (e.g. earlier hours of today).
+          .filter(s => new Date(`${s.date}T${s.start_time}`).getTime() > nowMs)
+        const bySlot: Record<string, string> = {}
+        for (const a of apptsRes.data ?? []) {
+          if (!a.slot_id) continue
+          if (a.id === appointment.id) continue
+          bySlot[a.slot_id] = a.client_name
+        }
+
+        setSlots(allSlots)
+        setOccupiedBySlotId(bySlot)
         setLoading(false)
-        return
-      }
-
-      const allSlots = (slotsRes.data ?? []).filter(s => s.id !== appointment.slot_id)
-      const bySlot: Record<string, string> = {}
-      for (const a of apptsRes.data ?? []) {
-        if (!a.slot_id) continue
-        if (a.id === appointment.id) continue
-        bySlot[a.slot_id] = a.client_name
-      }
-
-      setSlots(allSlots)
-      setOccupiedBySlotId(bySlot)
-      setLoading(false)
-    })
+      })
   }, [year, month, appointment.id, appointment.slot_id])
 
   const datesWithSlots = useMemo(() => new Set(slots.map(s => s.date)), [slots])
@@ -105,7 +124,7 @@ export function EditAppointmentModal({ appointment, onDismiss, onSave }: EditApp
   const occupiedLabels = useMemo(() => {
     const labels: Record<string, string> = {}
     for (const slotId of Object.keys(occupiedBySlotId)) {
-      labels[slotId] = `Ocupat: ${occupiedBySlotId[slotId]}`
+      labels[slotId] = `${occupiedBySlotId[slotId]}`
     }
     return labels
   }, [occupiedBySlotId])
