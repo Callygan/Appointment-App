@@ -222,9 +222,9 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
     { label: 'Nume', key: 'client_name' },
     { label: 'Dată', key: 'date' },
     { label: 'Oră', key: 'time' },
+    { label: 'Serviciu', key: 'service' },
     { label: 'Telefon' },
     { label: 'Instagram' },
-    { label: 'Serviciu', key: 'service' },
     { label: 'Nr.', key: 'booking_number' },
     ...(hasActions ? [{ label: '' }] : []),
   ]
@@ -273,6 +273,7 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
               <td className="px-4 py-3 text-[#1d1d1f] whitespace-nowrap">
                 {a.available_slots ? formatTime(a.available_slots.start_time) : a.appointment_time ? formatTime(a.appointment_time) : '—'}
               </td>
+              <td className="px-4 py-3 text-[#1d1d1f]">{a.services?.name ?? <span className="text-[#6e6e73]/40">—</span>}</td>
               <td className="px-4 py-3">
                 <a href={`tel:${a.client_phone}`} className="text-[#34c759] no-underline hover:underline">{a.client_phone}</a>
               </td>
@@ -281,7 +282,6 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
                   ? <a href={`https://instagram.com/${a.client_instagram}`} target="_blank" rel="noreferrer" className="text-[#34c759] no-underline hover:underline">@{a.client_instagram}</a>
                   : <span className="text-[#6e6e73]/40">—</span>}
               </td>
-              <td className="px-4 py-3 text-[#1d1d1f]">{a.services?.name ?? <span className="text-[#6e6e73]/40">—</span>}</td>
               <td className="px-4 py-3 text-xs font-semibold text-center text-[#6e6e73] w-8 tabular-nums">#{a.booking_number}</td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">

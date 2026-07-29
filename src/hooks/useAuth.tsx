@@ -36,9 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ACTIVITY_EVENTS.forEach(e => window.addEventListener(e, onActivity, { passive: true }))
 
     timerRef.current = setInterval(async () => {
-      const lastActivity = Number(localStorage.getItem(LS_LAST_ACTIVITY) ?? 0)
+      const stored = localStorage.getItem(LS_LAST_ACTIVITY)
       const now = Date.now()
-      if (now - lastActivity > INACTIVITY_MS) {
+      // Dacă timestamp-ul lipsește, îl inițializăm (nu delogăm din greșeală)
+      if (!stored) {
+        localStorage.setItem(LS_LAST_ACTIVITY, String(now))
+        return
+      }
+      if (now - Number(stored) > INACTIVITY_MS) {
         await forceSignOut()
       }
     }, 60_000) // verifică la fiecare minut
