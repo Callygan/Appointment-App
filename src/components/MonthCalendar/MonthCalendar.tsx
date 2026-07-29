@@ -27,12 +27,14 @@ export function MonthCalendar({
   const daysInMonth = new Date(year, month, 0).getDate()
   const today = getDateStr(new Date())
 
-  // Full week grid: include spill days from prev/next month to fill the rows.
-  const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7
-  const cells: Date[] = Array.from(
-    { length: totalCells },
-    (_, i) => new Date(year, month - 1, 1 - firstDow + i),
-  )
+  const cells: (number | null)[] = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+
+  function toDateStr(day: number) {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  }
 
   return (
     <div className="w-full">
@@ -68,19 +70,19 @@ export function MonthCalendar({
           <div key={d} className="text-center text-xs font-medium text-[#6e6e73] py-1">{d}</div>
         ))}
 
-        {cells.map((date) => {
-          const dateStr = getDateStr(date)
-          const inMonth = date.getMonth() === month - 1
-          const day = date.getDate()
+        {cells.map((day, i) => {
+          if (day === null) return <div key={`empty-${i}`} />
+
+          const dateStr = toDateStr(day)
           const hasSlots = datesWithSlots.has(dateStr)
           const isSelected = selectedDate === dateStr
           const isPast = dateStr < today
           const isAfterMax = maxDate ? dateStr > maxDate : false
-          const isAvailable = inMonth && (allDatesSelectable
+          const isAvailable = allDatesSelectable
             ? (!isPast || !!allowPast) && !isAfterMax
-            : hasSlots && (!isPast || !!allowPast) && !isAfterMax)
-          const jsDow = date.getDay()
-          const isWeekend = jsDow === 0 || jsDow === 6
+            : hasSlots && (!isPast || !!allowPast) && !isAfterMax
+          const dow = (firstDow + day - 1) % 7
+          const isWeekend = dow === 5 || dow === 6
           const isFutureOrToday = dateStr >= today
 
           return (
@@ -92,9 +94,7 @@ export function MonthCalendar({
               aria-label={`${dateStr}${hasSlots ? ', disponibil' : ''}`}
               className={[
                 'aspect-square rounded-2xl text-sm transition-all flex items-center justify-center w-full border',
-                !inMonth
-                  ? 'bg-transparent border-transparent text-[#1d1d1f]/25 cursor-not-allowed'
-                  : isSelected
+                isSelected
                   ? 'bg-[#34c759] border-[#34c759] text-white font-semibold shadow-[0_4px_16px_rgba(52,199,89,0.4)] scale-105'
                   : isAvailable
                     ? 'bg-[#34c759]/10 border-[#34c759]/25 text-[#34c759] font-semibold cursor-pointer hover:bg-[#34c759]/20 hover:scale-105'
