@@ -27,15 +27,13 @@ function apptTime(a: Appointment): string {
   return (a.available_slots?.start_time ?? a.appointment_time ?? '').slice(0, 5)
 }
 
-// Monday-first week array for a month
-function buildMonthGrid(year: number, month: number): (Date | null)[] {
+// Monday-first week array for a month (includes spill days from adjacent months)
+function buildMonthGrid(year: number, month: number): Date[] {
   const first = new Date(year, month, 1)
-  const last = new Date(year, month + 1, 0)
   const startDow = (first.getDay() + 6) % 7 // 0=Mon
-  const grid: (Date | null)[] = Array(startDow).fill(null)
-  for (let d = 1; d <= last.getDate(); d++) grid.push(new Date(year, month, d))
-  while (grid.length % 7 !== 0) grid.push(null)
-  return grid
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const total = Math.ceil((startDow + daysInMonth) / 7) * 7
+  return Array.from({ length: total }, (_, i) => new Date(year, month, 1 - startDow + i))
 }
 
 // Week days Mon-Sun from a date
@@ -162,8 +160,7 @@ export function CalendarTab() {
         </div>
         {/* grid */}
         <div className="grid grid-cols-7">
-          {grid.map((day, i) => {
-            if (!day) return <div key={`e-${i}`} className="min-h-[110px] border-b border-r border-black/8 bg-black/[0.02]" />
+          {grid.map((day) => {
             const ds = getDateStr(day)
             const isToday = ds === todayStr
             const isOtherMonth = day.getMonth() !== current.getMonth()
