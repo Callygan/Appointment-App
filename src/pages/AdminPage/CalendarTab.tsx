@@ -140,9 +140,11 @@ export function CalendarTab() {
     return (
       <button
         onClick={(e) => { e.stopPropagation(); setSelected(a) }}
-        className={`w-full text-left rounded-lg px-2 py-0.5 text-[11px] font-medium truncate border-none cursor-pointer transition-all hover:scale-[1.02] ${c.bg} ${c.text}`}
+        className={`w-full text-left rounded-lg px-1 py-0.5 text-[11px] font-medium border-none cursor-pointer transition-all hover:scale-[1.02] ${c.bg} ${c.text}`}
       >
-        {showTime && <>{apptTime(a)} </>}{a.client_name}
+        <span className="block overflow-hidden whitespace-nowrap">
+          {showTime && <span className="hidden sm:inline">{apptTime(a)} </span>}{a.client_name}
+        </span>
       </button>
     )
   }
