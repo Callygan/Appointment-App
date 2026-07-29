@@ -3,10 +3,8 @@ import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Session, AuthError } from '@supabase/supabase-js'
 
-const INACTIVITY_MS = 60 * 60 * 1000   // 1 oră
-const ABSOLUTE_MS   = 10 * 60 * 60 * 1000 // 10 ore
+const INACTIVITY_MS = 48 * 60 * 60 * 1000 // 48 ore
 const LS_LAST_ACTIVITY = 'admin_last_activity'
-const LS_LOGIN_TIME    = 'admin_login_time'
 const ACTIVITY_EVENTS  = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'] as const
 
 interface AuthContextValue {
@@ -25,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const forceSignOut = useCallback(async () => {
     localStorage.removeItem(LS_LAST_ACTIVITY)
-    localStorage.removeItem(LS_LOGIN_TIME)
     await supabase.auth.signOut()
   }, [])
 
@@ -40,9 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     timerRef.current = setInterval(async () => {
       const lastActivity = Number(localStorage.getItem(LS_LAST_ACTIVITY) ?? 0)
-      const loginTime    = Number(localStorage.getItem(LS_LOGIN_TIME) ?? 0)
       const now = Date.now()
-      if (now - lastActivity > INACTIVITY_MS || now - loginTime > ABSOLUTE_MS) {
+      if (now - lastActivity > INACTIVITY_MS) {
         await forceSignOut()
       }
     }, 60_000) // verifică la fiecare minut
@@ -59,10 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       if (data.session) {
         // If a session exists at mount (tab reloaded), check expiration immediately
-        const loginTime    = Number(localStorage.getItem(LS_LOGIN_TIME) ?? 0)
         const lastActivity = Number(localStorage.getItem(LS_LAST_ACTIVITY) ?? 0)
         const now = Date.now()
-        if (loginTime && (now - lastActivity > INACTIVITY_MS || now - loginTime > ABSOLUTE_MS)) {
+        if (lastActivity && now - lastActivity > INACTIVITY_MS) {
           forceSignOut()
           return
         }
@@ -86,9 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (!error) {
-      const now = String(Date.now())
-      localStorage.setItem(LS_LOGIN_TIME, now)
-      localStorage.setItem(LS_LAST_ACTIVITY, now)
+      localStorage.setItem(LS_LAST_ACTIVITY, String(Date.now()))
       startWatcher()
     }
     return error
