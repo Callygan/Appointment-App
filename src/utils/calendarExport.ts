@@ -1,7 +1,7 @@
 import { addMinutesToTime } from './dateUtils'
 
 /** Salon address used for calendar event location/description. */
-export const SALON_ADDRESS = 'Nail Bar Sibiu, Strada Mihail Sebastian nr. 18, 550326 Sibiu'
+export const SALON_ADDRESS = 'Strada Mihail Sebastian 18, 550326 Sibiu'
 
 export interface CalendarEvent {
   title: string
@@ -14,6 +14,8 @@ export interface CalendarEvent {
   durationMinutes?: number
   description?: string
   location?: string
+  /** Minutes before the event to trigger a reminder. Defaults to 1440 (24h). Set to 0 to disable. */
+  reminderMinutes?: number
 }
 
 /** Resolves the event's end time (HH:MM), defaulting to +60 min. */
@@ -55,6 +57,8 @@ export function buildICS(e: CalendarEvent): string {
   const dtstamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours()).padStart(2, '0')}${String(now.getUTCMinutes()).padStart(2, '0')}${String(now.getUTCSeconds()).padStart(2, '0')}Z`
   const uid = `${toCalDate(e.date, e.startTime)}-${Math.random().toString(36).slice(2)}@appointment-app`
 
+  const reminder = e.reminderMinutes ?? 1440 // default: 24h before
+
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -69,6 +73,13 @@ export function buildICS(e: CalendarEvent): string {
     `SUMMARY:${escapeICS(e.title)}`,
     ...(e.description ? [`DESCRIPTION:${escapeICS(e.description)}`] : []),
     ...(e.location ? [`LOCATION:${escapeICS(e.location)}`] : []),
+    ...(reminder > 0 ? [
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${escapeICS(e.title)}`,
+      `TRIGGER:-PT${reminder}M`,
+      'END:VALARM',
+    ] : []),
     'END:VEVENT',
     'END:VCALENDAR',
   ]

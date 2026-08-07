@@ -301,7 +301,7 @@ export function MyAppointmentPage() {
                   <div className="mb-4">
                     <AddToCalendar
                       event={{
-                        title: `Nail bar - Programare #${appointment.booking_number}`,
+                        title: 'Nail bar - Programare',
                         date: appointment.appointment_date,
                         startTime: formatTime(appointment.appointment_time),
                         location: SALON_ADDRESS,

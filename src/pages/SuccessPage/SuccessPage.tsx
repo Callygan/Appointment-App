@@ -9,9 +9,10 @@ interface Props {
   bookingNumber: number
   slot: AvailableSlot | null
   serviceName?: string
+  servicePrice?: number
 }
 
-export function SuccessPage({ onBack, bookingNumber, slot, serviceName }: Props) {
+export function SuccessPage({ onBack, bookingNumber, slot, serviceName, servicePrice }: Props) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
@@ -48,7 +49,7 @@ export function SuccessPage({ onBack, bookingNumber, slot, serviceName }: Props)
           <div className="mb-6">
             <AddToCalendar
               event={{
-                title: `Nail bar - Programare${bookingNumber > 0 ? ` #${bookingNumber}` : ''}`,
+                title: 'Nail bar - Programare',
                 date: slot.date,
                 startTime: slot.start_time.slice(0, 5),
                 endTime: slot.end_time.slice(0, 5),
@@ -57,6 +58,9 @@ export function SuccessPage({ onBack, bookingNumber, slot, serviceName }: Props)
                   bookingNumber > 0 ? `Număr programare: #${bookingNumber}` : null,
                   timeLabel ? `Ora: ${timeLabel}` : null,
                   serviceName ? `Serviciu: ${serviceName}` : null,
+                  serviceName && servicePrice != null
+                    ? `Preț: ${servicePrice} RON (preț estimativ pentru serviciul ales; poate diferi dacă soliciți servicii suplimentare)`
+                    : null,
                   `Adresă: ${SALON_ADDRESS}`,
                 ].filter((l) => l !== null).join('\n'),
               }}
