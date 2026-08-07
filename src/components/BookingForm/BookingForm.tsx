@@ -10,7 +10,7 @@ import type { AvailableSlot, Service } from '../../types'
 interface Props {
   slot: AvailableSlot
   services: Service[]
-  onSuccess: (bookingNumber: number) => void
+  onSuccess: (bookingNumber: number, serviceName?: string) => void
   onCancel: () => void
 }
 
@@ -79,7 +79,8 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       return
     }
 
-    onSuccess(bookingNumber as number)
+    const selectedServiceName = mainServices.find((s) => s.id === serviceId)?.name
+    onSuccess(bookingNumber as number, selectedServiceName)
   }
 
   const [visible, setVisible] = useState(false)
