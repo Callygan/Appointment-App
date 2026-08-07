@@ -17,6 +17,7 @@ export function BookingPage() {
   const [bookedSlot, setBookedSlot] = useState<AvailableSlot | null>(null)
   const [booked, setBooked] = useState(false)
   const [bookingNumber, setBookingNumber] = useState<number>(0)
+  const [bookedServiceName, setBookedServiceName] = useState<string | undefined>(undefined)
 
   const { slots, loading, error, datesWithSlots, refresh } = useAvailableSlots(year, month)
   const { services } = useServices()
@@ -50,8 +51,9 @@ export function BookingPage() {
     setSelectedDate(null)
   }
 
-  function handleBookSuccess(num: number) {
+  function handleBookSuccess(num: number, serviceName?: string) {
     setBookingNumber(num)
+    setBookedServiceName(serviceName)
     setBookedSlot(bookingSlot)
     setBookingSlot(null)
     setBooked(true)
@@ -59,7 +61,7 @@ export function BookingPage() {
   }
 
   if (booked) {
-    return <SuccessPage bookingNumber={bookingNumber} slot={bookedSlot} onBack={() => { setBooked(false); setSelectedDate(null) }} />
+    return <SuccessPage bookingNumber={bookingNumber} slot={bookedSlot} serviceName={bookedServiceName} onBack={() => { setBooked(false); setSelectedDate(null) }} />
   }
 
   return (
