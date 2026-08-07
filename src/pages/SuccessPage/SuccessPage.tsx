@@ -71,7 +71,7 @@ export function SuccessPage({ onBack, bookingNumber, slot, serviceName, serviceP
 
         <button
           onClick={onBack}
-          className={`${greenBtnCls} px-8 py-3`}
+          className={`${greenBtnCls} w-full px-8 py-3`}
         >
           Fă o altă programare
         </button>
