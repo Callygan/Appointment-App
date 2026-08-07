@@ -6,6 +6,8 @@ import { greenBtnCls } from '../../components/ui/buttons'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { formatDate, formatTime } from '../../utils/dateUtils'
 import { RescheduleModal } from '../../components/ui/RescheduleModal'
+import { AddToCalendar } from '../../components/ui/AddToCalendar'
+import { SALON_ADDRESS } from '../../utils/calendarExport'
 import type { AvailableSlot } from '../../types'
 
 interface AppointmentInfo {
@@ -295,6 +297,25 @@ export function MyAppointmentPage() {
             {/* Actions */}
             {(appointment.status === 'pending' || appointment.status === 'confirmed') && !cancelled && (
               <div className="px-6 pb-5">
+                {appointment.appointment_date && appointment.appointment_time && (
+                  <div className="mb-4">
+                    <AddToCalendar
+                      event={{
+                        title: 'Nail bar - Programare',
+                        date: appointment.appointment_date,
+                        startTime: formatTime(appointment.appointment_time),
+                        location: SALON_ADDRESS,
+                        description: [
+                          `Număr programare: #${appointment.booking_number}`,
+                          `Ora: ${formatTime(appointment.appointment_time)}`,
+                          appointment.service_name ? `Serviciu: ${appointment.service_name}` : null,
+                          `Adresă: ${SALON_ADDRESS}`,
+                        ].filter((l) => l !== null).join('\n'),
+                      }}
+                      icsFilename={`programare-${appointment.booking_number}.ics`}
+                    />
+                  </div>
+                )}
                 {error && <p className="text-xs text-red-500 mb-3 text-center">{error}</p>}
                 <div className="flex gap-2">
                   {canReschedule && (
