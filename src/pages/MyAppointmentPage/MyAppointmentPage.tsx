@@ -17,6 +17,7 @@ interface AppointmentInfo {
   appointment_date: string | null
   appointment_time: string | null
   service_name: string | null
+  service_price: number | null
 }
 
 const STATUS_CONFIG = STATUS_COLOR
@@ -309,6 +310,9 @@ export function MyAppointmentPage() {
                           `Număr programare: #${appointment.booking_number}`,
                           `Ora: ${formatTime(appointment.appointment_time)}`,
                           appointment.service_name ? `Serviciu: ${appointment.service_name}` : null,
+                          appointment.service_name && appointment.service_price != null
+                            ? `Preț: ${appointment.service_price} RON (preț estimativ pentru serviciul ales; poate diferi dacă soliciți servicii suplimentare)`
+                            : null,
                           `Adresă: ${SALON_ADDRESS}`,
                         ].filter((l) => l !== null).join('\n'),
                       }}
