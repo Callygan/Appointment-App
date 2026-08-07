@@ -1,14 +1,17 @@
 import type { AvailableSlot } from '../../types'
 import { greenBtnCls } from '../../components/ui/buttons'
+import { AddToCalendar } from '../../components/ui/AddToCalendar'
+import { SALON_ADDRESS } from '../../utils/calendarExport'
 import { useEffect } from 'react'
 
 interface Props {
   onBack: () => void
   bookingNumber: number
   slot: AvailableSlot | null
+  serviceName?: string
 }
 
-export function SuccessPage({ onBack, bookingNumber, slot }: Props) {
+export function SuccessPage({ onBack, bookingNumber, slot, serviceName }: Props) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
@@ -38,6 +41,27 @@ export function SuccessPage({ onBack, bookingNumber, slot }: Props) {
               <p className="text-sm font-medium text-[#1d1d1f] mb-2">{dateLabel} &middot; ora {timeLabel}</p>
             )}
             <p className="text-xs text-[#6e6e73] leading-relaxed">Reține acest număr — îl vei folosi dacă dorești să anulezi sau să verifici detaliile rezervării tale.</p>
+          </div>
+        )}
+
+        {slot && (
+          <div className="mb-6">
+            <AddToCalendar
+              event={{
+                title: `Nail bar - Programare${bookingNumber > 0 ? ` #${bookingNumber}` : ''}`,
+                date: slot.date,
+                startTime: slot.start_time.slice(0, 5),
+                endTime: slot.end_time.slice(0, 5),
+                location: SALON_ADDRESS,
+                description: [
+                  bookingNumber > 0 ? `Număr programare: #${bookingNumber}` : null,
+                  timeLabel ? `Ora: ${timeLabel}` : null,
+                  serviceName ? `Serviciu: ${serviceName}` : null,
+                  `Adresă: ${SALON_ADDRESS}`,
+                ].filter((l) => l !== null).join('\n'),
+              }}
+              icsFilename={`programare-${bookingNumber || ''}.ics`}
+            />
           </div>
         )}
 
