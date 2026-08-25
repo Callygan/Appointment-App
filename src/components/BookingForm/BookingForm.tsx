@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Select } from '../Select/Select'
+import { CountryCodeSelect } from '../CountryCodeSelect/CountryCodeSelect'
 import { validateName, validatePhone, capitalizeWords, formatPhoneNumber, sanitizeName, sanitizeInstagram } from '../../utils/validation'
 import { inputCls, labelCls, inputBorderCls } from '../ui/formStyles'
 import { greenBtnCls } from '../ui/buttons'
@@ -41,7 +42,17 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       setNameError(null)
     }
 
-    if (validatePhone(phoneDialCode, phoneNumber)) {
+    const fullPhone = phoneDialCode.trim() + phoneNumber.replace(/\D/g, '')
+
+    // Cheap synchronous pre-check (E.164 length); then a strict per-country
+    // validation via libphonenumber-js, imported lazily so it stays out of the
+    // initial bundle and only loads on the first submit.
+    let phoneInvalid = Boolean(validatePhone(phoneDialCode, phoneNumber))
+    if (!phoneInvalid) {
+      const { isValidPhoneNumber } = await import('libphonenumber-js')
+      phoneInvalid = !isValidPhoneNumber(fullPhone)
+    }
+    if (phoneInvalid) {
       setPhoneError(true)
       hasError = true
     } else {
@@ -58,8 +69,6 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
     if (hasError) return
     setSubmitting(true)
     setError(null)
-
-    const fullPhone = phoneDialCode.trim() + phoneNumber.replace(/\D/g, '')
 
     const { data: bookingNumber, error: rpcError } = await supabase.rpc('book_slot', {
       p_slot_id: slot.id,
@@ -140,31 +149,30 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
             <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${nameError ? 'visible' : 'invisible'}`}>{nameError ?? 'Introdu numele complet (minim 5 caractere).'}</span>
           </label>
 
-          <label className={labelCls}>
+          <div className={labelCls}>
             <span className="flex items-center gap-1 pl-2">Telefon <span className="text-red-500 normal-case tracking-normal font-normal">*</span></span>
-            <div className={`flex items-center bg-white/50 backdrop-blur-sm border rounded-2xl overflow-hidden focus-within:bg-white/85 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] ${phoneError ? 'border-red-400' : 'border-white/60 focus-within:border-[#34c759]'}`}>
-              <input
-                type="text"
+            <div className="flex items-stretch gap-2">
+              <CountryCodeSelect
                 value={phoneDialCode}
-                onChange={(e) => { setPhoneDialCode(e.target.value); setPhoneError(false) }}
-                className="w-16 px-3 py-3 text-sm font-medium text-[#1d1d1f] bg-white/30 border-r border-white/60 outline-none text-center shrink-0"
-                placeholder="+40"
-                autoComplete="off"
+                onChange={(v) => { setPhoneDialCode(v); setPhoneError(false) }}
+                error={phoneError}
               />
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => {
-                  setPhoneNumber(formatPhoneNumber(e.target.value))
-                  setPhoneError(false)
-                }}
-                placeholder="7XX XXX XXX"
-                autoComplete="tel"
-                className="flex-1 px-3 py-3 text-sm font-normal text-[#1d1d1f] bg-transparent outline-none"
-              />
+              <div className={`flex-1 flex items-center bg-white/50 backdrop-blur-sm border rounded-2xl overflow-hidden focus-within:bg-white/85 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] ${phoneError ? 'border-red-400' : 'border-white/60 focus-within:border-[#34c759]'}`}>
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    setPhoneNumber(formatPhoneNumber(e.target.value))
+                    setPhoneError(false)
+                  }}
+                  placeholder="7XX XXX XXX"
+                  autoComplete="tel"
+                  className="flex-1 px-3 py-3 text-sm font-normal text-[#1d1d1f] bg-transparent outline-none"
+                />
+              </div>
             </div>
             <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${phoneError ? 'visible' : 'invisible'}`}>Număr de telefon invalid.</span>
-          </label>
+          </div>
 
           <label className={labelCls}>
             <span className="pl-2">Instagram</span>
