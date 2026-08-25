@@ -61,7 +61,7 @@ export function validateMessage(message: string): string | null {
 }
 
 export function capitalizeWords(value: string): string {
-  return value.replace(/\b\w/g, (c) => c.toUpperCase())
+  return value.replace(/(^|[\s.-])(\p{L})/gu, (_, sep, c) => sep + c.toUpperCase())
 }
 
 export function formatPhoneNumber(value: string): string {
