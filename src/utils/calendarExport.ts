@@ -86,9 +86,30 @@ export function buildICS(e: CalendarEvent): string {
   return lines.join('\r\n')
 }
 
+/**
+ * Detects in-app browsers (Instagram, Facebook, Messenger, TikTok, etc.).
+ * These WebViews block blob-URL / `download` attribute downloads, so an .ics
+ * file "click" silently does nothing.
+ */
+export function isInAppBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  return /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Messenger|Line\/|TikTok|Snapchat|Pinterest|LinkedIn|Twitter/i.test(ua)
+}
+
 /** Triggers a download of the event as an .ics file (Apple/iOS/Outlook). */
 export function downloadICS(e: CalendarEvent, filename = 'programare.ics'): void {
-  const blob = new Blob([buildICS(e)], { type: 'text/calendar;charset=utf-8' })
+  const ics = buildICS(e)
+
+  // In-app browsers (Instagram/Facebook/etc.) block blob-URL downloads, so the
+  // normal anchor.click() does nothing. Navigate to a data URI instead, which
+  // the OS can hand off to the Calendar app / open in preview.
+  if (isInAppBrowser()) {
+    window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics)
+    return
+  }
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
