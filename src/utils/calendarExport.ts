@@ -97,6 +97,13 @@ export function isInAppBrowser(): boolean {
   return /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Messenger|Line\/|TikTok|Snapchat|Pinterest|LinkedIn|Twitter/i.test(ua)
 }
 
+/** Detects iOS (iPhone/iPad/iPod), including iPadOS reporting as desktop Safari. */
+export function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1)
+}
+
 /** UTF-8 safe base64 (handles Romanian diacritics), for passing the .ics via URL. */
 function utf8ToBase64(s: string): string {
   return btoa(unescape(encodeURIComponent(s)))
@@ -106,11 +113,11 @@ function utf8ToBase64(s: string): string {
 export function downloadICS(e: CalendarEvent, filename = 'programare.ics'): void {
   const ics = buildICS(e)
 
-  // In-app browsers (Instagram/Facebook WKWebView on iOS) block blob-URL and
-  // data-URI downloads. The only reliable path is to navigate to a real HTTP
-  // endpoint that serves `text/calendar`, which iOS hands off to the Calendar
-  // app natively — even inside Instagram. Handled by /api/calendar on Vercel.
-  if (isInAppBrowser()) {
+  // iOS (Safari and especially in-app WKWebViews like Instagram/Facebook) blocks
+  // blob-URL and data-URI downloads. The only reliable path is to navigate to a
+  // real HTTP endpoint that serves `text/calendar`, which iOS hands off to the
+  // Calendar app natively — even inside Instagram. Handled by /api/calendar.
+  if (isIOS() || isInAppBrowser()) {
     const name = filename.replace(/\.ics$/i, '')
     window.location.href = `/api/calendar?n=${encodeURIComponent(name)}&d=${encodeURIComponent(utf8ToBase64(ics))}`
     return
