@@ -88,8 +88,8 @@ export function buildICS(e: CalendarEvent): string {
 
 /**
  * Detects in-app browsers (Instagram, Facebook, Messenger, TikTok, etc.).
- * These WebViews block blob-URL / `download` attribute downloads, so an .ics
- * file "click" silently does nothing.
+ * These WebViews — especially iOS WKWebView — block blob-URL and data-URI
+ * downloads, so an .ics "click" silently does nothing.
  */
 export function isInAppBrowser(): boolean {
   if (typeof navigator === 'undefined') return false
@@ -97,15 +97,22 @@ export function isInAppBrowser(): boolean {
   return /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Messenger|Line\/|TikTok|Snapchat|Pinterest|LinkedIn|Twitter/i.test(ua)
 }
 
+/** UTF-8 safe base64 (handles Romanian diacritics), for passing the .ics via URL. */
+function utf8ToBase64(s: string): string {
+  return btoa(unescape(encodeURIComponent(s)))
+}
+
 /** Triggers a download of the event as an .ics file (Apple/iOS/Outlook). */
 export function downloadICS(e: CalendarEvent, filename = 'programare.ics'): void {
   const ics = buildICS(e)
 
-  // In-app browsers (Instagram/Facebook/etc.) block blob-URL downloads, so the
-  // normal anchor.click() does nothing. Navigate to a data URI instead, which
-  // the OS can hand off to the Calendar app / open in preview.
+  // In-app browsers (Instagram/Facebook WKWebView on iOS) block blob-URL and
+  // data-URI downloads. The only reliable path is to navigate to a real HTTP
+  // endpoint that serves `text/calendar`, which iOS hands off to the Calendar
+  // app natively — even inside Instagram. Handled by /api/calendar on Vercel.
   if (isInAppBrowser()) {
-    window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics)
+    const name = filename.replace(/\.ics$/i, '')
+    window.location.href = `/api/calendar?n=${encodeURIComponent(name)}&d=${encodeURIComponent(utf8ToBase64(ics))}`
     return
   }
 
