@@ -9,7 +9,21 @@ interface Props {
 const btnCls =
   'flex-1 flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold border border-black/10 bg-white hover:bg-white/90 text-[#1d1d1f] cursor-pointer transition-all hover:scale-[1.01] active:scale-95 no-underline shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
 
+/**
+ * On iOS, in-app browsers (Instagram/Facebook/etc. WKWebView) block .ics
+ * downloads, so the "add to calendar" button can't work there. We hide it in
+ * that case. Android in-app browsers DO support the download, so we keep it.
+ */
+function isBlockedIOSInApp(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1)
+  const isInApp = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Messenger|Line\/|TikTok|Snapchat|Pinterest|LinkedIn|Twitter/i.test(ua)
+  return isIOS && isInApp
+}
+
 export function AddToCalendar({ event, icsFilename }: Props) {
+  if (isBlockedIOSInApp()) return null
   return (
     <div className="flex flex-col gap-2">
       <p className="hidden lg:block text-xs font-semibold text-[#6e6e73] uppercase tracking-wide text-center">Adaugă în calendar</p>
