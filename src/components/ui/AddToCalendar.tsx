@@ -14,21 +14,8 @@ export function AddToCalendar({ event, icsFilename }: Props) {
     <div className="flex flex-col gap-2">
       <p className="hidden lg:block text-xs font-semibold text-[#6e6e73] uppercase tracking-wide text-center">Adaugă în calendar</p>
 
-      {/* Mobile + tablet: single .ics button (works on both Android and iOS) */}
-      <button
-        type="button"
-        onClick={() => downloadICS(event, icsFilename)}
-        className={`${btnCls} w-full flex-none lg:hidden`}
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-        </svg>
-        Adaugă în calendar
-      </button>
-
-      {/* Desktop: separate Google + Apple buttons */}
-      <div className="hidden lg:flex gap-2">
+      {/* Google (works everywhere, incl. in-app browsers) + Apple/download (.ics) */}
+      <div className="flex gap-2">
         <a href={googleCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className={btnCls}>
           <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/>
@@ -44,7 +31,7 @@ export function AddToCalendar({ event, icsFilename }: Props) {
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          Descarcă
+          Apple
         </button>
       </div>
     </div>
