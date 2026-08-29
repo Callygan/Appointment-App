@@ -112,17 +112,26 @@ function utf8ToBase64(s: string): string {
 /** Triggers a download of the event as an .ics file (Apple/iOS/Outlook). */
 export function downloadICS(e: CalendarEvent, filename = 'programare.ics'): void {
   const ics = buildICS(e)
+  const name = filename.replace(/\.ics$/i, '')
+  const query = `n=${encodeURIComponent(name)}&d=${encodeURIComponent(utf8ToBase64(ics))}`
 
-  // iOS (Safari and especially in-app WKWebViews like Instagram/Facebook) blocks
-  // blob-URL and data-URI downloads. The only reliable path is to navigate to a
-  // real HTTP endpoint that serves `text/calendar`, which iOS hands off to the
-  // Calendar app natively — even inside Instagram. Handled by /api/calendar.
-  if (isIOS() || isInAppBrowser()) {
-    const name = filename.replace(/\.ics$/i, '')
-    window.location.href = `/api/calendar?n=${encodeURIComponent(name)}&d=${encodeURIComponent(utf8ToBase64(ics))}`
+  // In-app browsers (Instagram/Facebook WKWebView) block blob-URL, data-URI and
+  // even plain https .ics downloads. `webcal://` is a URL scheme handed off to
+  // the Calendar app by iOS at the OS level (like tel:/mailto:), so it can
+  // escape the in-app browser sandbox and open Apple Calendar directly.
+  if (isInAppBrowser()) {
+    window.location.href = `webcal://${window.location.host}/api/calendar?${query}`
     return
   }
 
+  // Normal iOS Safari: a real https endpoint serving `text/calendar` opens the
+  // Calendar "add event" sheet reliably (blob downloads are flaky on iOS).
+  if (isIOS()) {
+    window.location.href = `/api/calendar?${query}`
+    return
+  }
+
+  // Desktop / Android: classic blob download keeps the user on the page.
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
