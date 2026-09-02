@@ -61,8 +61,9 @@ function apptDurationMins(a: Appointment): number {
 // Gray palette for appointments that already happened
 const PAST_COLOR = { bg: 'bg-[#8e8e93]/15', text: 'text-[#6e6e73]', dot: 'bg-[#8e8e93]' }
 
-// Distinct left-border accents to tell overlapping appointments apart
-const OVERLAP_ACCENTS = ['#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6', '#14b8a6']
+// Distinct left-border accents to tell overlapping appointments apart.
+// Soft pastel tones matching the site's pink/lilac/mint gradient aesthetic.
+const OVERLAP_ACCENTS = ['#a78bfa', '#f472b6', '#60a5fa', '#34d399', '#fb7185']
 
 // An appointment is "past" once its end time is before now
 function isPastAppt(a: Appointment, now: Date = new Date()): boolean {
@@ -294,7 +295,7 @@ export function CalendarTab() {
                         key={a.id}
                         onClick={(e) => { e.stopPropagation(); setSelected(a) }}
                         className={`absolute flex flex-col justify-center px-1.5 border-none cursor-pointer hover:brightness-95 rounded-md ${c.bg}`}
-                        style={{ top: top + 1, height, left: (overlap ? col * 13 : 0) + 2, right: 2, zIndex: 10 + col, borderLeft: overlap ? `3px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
+                        style={{ top: top + 1, height, left: 2, right: 2, zIndex: 10 + col, borderLeft: overlap ? `3px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
                       >
                         <span className={`text-[11px] font-medium w-full overflow-hidden whitespace-nowrap ${c.text}`} style={{ textOverflow: "'.'" }}>{a.client_name}</span>
                         {height > 34 && <span className="text-[10px] text-[#6e6e73] truncate w-full">{apptTime(a)}</span>}
@@ -349,7 +350,7 @@ export function CalendarTab() {
                   key={a.id}
                   onClick={() => setSelected(a)}
                   className={`absolute text-left rounded-xl px-3 border-none cursor-pointer hover:brightness-95 flex flex-col justify-center ${c.bg}`}
-                  style={{ top: top + 1, height, left: (overlap ? col * 13 : 0) + 4, right: 4, zIndex: 10 + col, borderLeft: overlap ? `4px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
+                  style={{ top: top + 1, height, left: 4, right: 4, zIndex: 10 + col, borderLeft: overlap ? `4px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className={`text-sm font-medium leading-tight ${c.text}`}>{a.client_name}</p>
