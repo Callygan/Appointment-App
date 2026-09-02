@@ -76,6 +76,7 @@ export function SlotsTab() {
   const [adminMonth, setAdminMonth] = useState(today.getMonth() + 1)
   const [adminSelectedDate, setAdminSelectedDate] = useState<string | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState<{ id: string; label: string } | null>(null)
+  const [overlapConfirm, setOverlapConfirm] = useState<{ date: string; start: string; end: string; newLabel: string; conflictLabel: string } | null>(null)
   const { slots: adminSlots, datesWithSlots: adminDates, loading: adminLoading, deleteSlot, refresh: adminRefresh } = useAdminSlots(adminYear, adminMonth)
 
   const inputCls = `${adminInputCls} cursor-pointer`
@@ -91,6 +92,14 @@ export function SlotsTab() {
     setBDays((prev) => prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day])
   }
 
+  async function doInsertSingle(date: string, start: string, end: string) {
+    setSaving(true); setMessage(null)
+    const { error } = await supabase.from('available_slots').insert({ date, start_time: start, end_time: end })
+    if (import.meta.env.DEV && error) console.error('insertSlot error:', error)
+    setMessage(error ? { type: 'error', text: 'Nu s-a putut adăuga slotul. Încearcă din nou.' } : { type: 'success', text: 'Slot adaugat cu succes.' })
+    adminRefresh(); setSaving(false)
+  }
+
   async function handleSingleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const [sh, sm] = sStart.split(':').map(Number)
@@ -100,16 +109,21 @@ export function SlotsTab() {
       return
     }
     const sEnd = `${String(Math.floor(endTotal / 60)).padStart(2, '0')}:${String(endTotal % 60).padStart(2, '0')}`
-    setSaving(true); setMessage(null)
+    setMessage(null)
     const { data: existing } = await supabase.from('available_slots').select('start_time, end_time').eq('date', sDate)
-    if (existing?.some(s => overlaps(sStart, sEnd, s.start_time, s.end_time))) {
-      setMessage({ type: 'error', text: 'Exista deja un slot care se suprapune cu acest interval.' })
-      setSaving(false); return
+    const conflict = existing?.find(s => overlaps(sStart, sEnd, s.start_time, s.end_time))
+    if (conflict) {
+      // Suprapunerea nu mai blocheaza: cerem confirmarea adminului si adaugam oricum.
+      setOverlapConfirm({
+        date: sDate,
+        start: sStart,
+        end: sEnd,
+        newLabel: `${sStart} - ${sEnd}`,
+        conflictLabel: `${conflict.start_time.slice(0, 5)} - ${conflict.end_time.slice(0, 5)}`,
+      })
+      return
     }
-    const { error } = await supabase.from('available_slots').insert({ date: sDate, start_time: sStart, end_time: sEnd })
-    if (import.meta.env.DEV && error) console.error('insertSlot error:', error)
-    setMessage(error ? { type: 'error', text: 'Nu s-a putut adăuga slotul. Încearcă din nou.' } : { type: 'success', text: 'Slot adaugat cu succes.' })
-    adminRefresh(); setSaving(false)
+    await doInsertSingle(sDate, sStart, sEnd)
   }
 
   async function handleBulkSubmit(e: React.FormEvent) {
@@ -270,6 +284,15 @@ export function SlotsTab() {
           confirmLabel="Da, șterge"
           onConfirm={async () => { const err = await deleteSlot(showDeleteModal.id); if (!err) setShowDeleteModal(null); else setMessage({ type: 'error', text: err }) }}
           onDismiss={() => setShowDeleteModal(null)}
+        />
+      )}
+      {overlapConfirm && (
+        <ConfirmModal
+          title="Slot suprapus"
+          description={<>Noul slot <strong className="text-[#1d1d1f]">{overlapConfirm.newLabel}</strong> se suprapune cu <strong className="text-[#1d1d1f]">{overlapConfirm.conflictLabel}</strong>. Îl adaugi oricum?</>}
+          confirmLabel="Da, adaugă"
+          onConfirm={async () => { const c = overlapConfirm; setOverlapConfirm(null); await doInsertSingle(c.date, c.start, c.end) }}
+          onDismiss={() => setOverlapConfirm(null)}
         />
       )}
     </div>
