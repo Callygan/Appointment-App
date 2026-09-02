@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { useEffect, useState, useCallback } from 'react'
+import { supabase, runAuthed } from '../lib/supabase'
 import { useAutoRefresh } from './useAutoRefresh'
 import type { Appointment } from '../types'
 
@@ -8,40 +8,30 @@ export function useAppointments() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  async function load(showLoading = true) {
+  const load = useCallback(async (showLoading = true) => {
     if (showLoading) {
       setLoading(true)
       setError(null)
     }
-    const { data, error } = await supabase
-      .from('appointments')
-      .select(`
-        *,
-        available_slots ( date, start_time, end_time ),
-        services ( name, price, duration_minutes )
-      `)
-      .order('created_at', { ascending: false })
+    const { data, error } = await runAuthed<Appointment[]>(() =>
+      supabase
+        .from('appointments')
+        .select(`
+          *,
+          available_slots ( date, start_time, end_time ),
+          services ( name, price, duration_minutes )
+        `)
+        .order('created_at', { ascending: false }),
+    )
 
     if (error) setError(error.message)
     else setAppointments(data ?? [])
     setLoading(false)
-  }
+  }, [])
 
   useEffect(() => {
-    supabase
-      .from('appointments')
-      .select(`
-        *,
-        available_slots ( date, start_time, end_time ),
-        services ( name, price, duration_minutes )
-      `)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message)
-        else setAppointments(data ?? [])
-        setLoading(false)
-      })
-  }, [])
+    load()
+  }, [load])
 
   // Refresh silently on interval and whenever the app regains focus / visibility
   // (e.g. reopening the installed PWA) so new bookings show up without a manual reload.
