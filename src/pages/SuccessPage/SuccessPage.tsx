@@ -10,15 +10,19 @@ interface Props {
   slot: AvailableSlot | null
   serviceName?: string
   servicePrice?: number
+  extras?: { name: string; price?: number }[]
 }
 
-export function SuccessPage({ onBack, bookingNumber, slot, serviceName, servicePrice }: Props) {
+export function SuccessPage({ onBack, bookingNumber, slot, serviceName, servicePrice, extras = [] }: Props) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
   const dateLabel = slot ? new Date(slot.date + 'T00:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : null
   const timeLabel = slot ? slot.start_time.slice(0, 5) : null
+  const hasExtras = extras.length > 0
+  const totalPrice = (servicePrice ?? 0) + extras.reduce((sum, e) => sum + (e.price ?? 0), 0)
+  const hasAnyPrice = servicePrice != null || extras.some((e) => e.price != null)
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="text-center glass-heavy rounded-3xl px-8 py-12 max-w-sm w-full">
@@ -29,10 +33,6 @@ export function SuccessPage({ onBack, bookingNumber, slot, serviceName, serviceP
         </div>
         <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-2 tracking-tight">Rezervare confirmată!</h1>
         <p className="text-[#6e6e73] leading-relaxed mb-3 text-sm">Programarea ta a fost înregistrată cu succes.<br />Ne vedem curând!</p>
-        <div className="inline-flex items-center gap-1.5 bg-[#34c759]/10 border border-[#34c759]/30 rounded-full px-3 py-1 mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
-          <span className="text-xs font-medium text-[#34c759]">Confirmată</span>
-        </div>
 
         {bookingNumber > 0 && (
           <div className="bg-white/50 border border-white/60 rounded-2xl px-5 py-4 mb-6 text-center">
@@ -58,8 +58,9 @@ export function SuccessPage({ onBack, bookingNumber, slot, serviceName, serviceP
                   bookingNumber > 0 ? `Număr programare: #${bookingNumber}` : null,
                   timeLabel ? `Ora: ${timeLabel}` : null,
                   serviceName ? `Serviciu: ${serviceName}` : null,
-                  serviceName && servicePrice != null
-                    ? `Preț: ${servicePrice} RON (preț estimativ pentru serviciul ales; poate diferi dacă soliciți servicii suplimentare)`
+                  hasExtras ? `Extra: ${extras.map((e) => e.name).join(', ')}` : null,
+                  hasAnyPrice
+                    ? `Total estimativ: ${totalPrice} RON (poate diferi în funcție de serviciile efectiv realizate)`
                     : null,
                   `Adresă: ${SALON_ADDRESS}`,
                 ].filter((l) => l !== null).join('\n'),
