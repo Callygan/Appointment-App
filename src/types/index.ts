@@ -32,4 +32,5 @@ export interface Appointment {
   // joined fields
   available_slots?: AvailableSlot
   services?: Pick<Service, 'name' | 'price' | 'duration_minutes'>
+  appointment_extras?: { service_id: string; services?: Pick<Service, 'name' | 'price'> }[]
 }
