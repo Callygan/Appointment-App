@@ -631,8 +631,11 @@ export function CalendarTab() {
                 { label: 'Dată', value: apptDate(selected) ? new Date(apptDate(selected) + 'T00:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' }) : '—' },
                 { label: 'Oră', value: apptTime(selected) || '—' },
                 ...(selected.services ? [{ label: 'Serviciu', value: selected.services.name }] : []),
+                ...((selected.appointment_extras ?? []).length > 0
+                  ? [{ label: 'Extra', value: (selected.appointment_extras ?? []).map((e) => e.services?.name ?? 'Extra').join(', ') }]
+                  : []),
               ].map(({ label, value }) => (
-                <div key={label}>
+                <div key={`${label}-${value}`}>
                   <div className="h-px bg-white/40 mb-3" />
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wide">{label}</span>
