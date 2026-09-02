@@ -78,6 +78,45 @@ function apptColor(a: Appointment) {
   return isPastAppt(a) ? PAST_COLOR : STATUS_COLOR[a.status]
 }
 
+// Side-by-side layout for overlapping appointments (Google Calendar style).
+// Groups appointments that overlap in time into clusters and assigns each a
+// column so they render next to each other instead of stacking on top.
+function layoutColumns(appts: Appointment[]): Map<string, { col: number; cols: number }> {
+  const result = new Map<string, { col: number; cols: number }>()
+  const events = appts
+    .map(a => {
+      const [sh, sm] = apptTime(a).split(':').map(Number)
+      const start = (sh || 0) * 60 + (sm || 0)
+      return { a, start, end: start + apptDurationMins(a) }
+    })
+    .sort((x, y) => x.start - y.start || x.end - y.end)
+
+  let cluster: { id: string; col: number }[] = []
+  let colEnds: number[] = [] // end time of the last event placed in each column
+  let clusterMaxEnd = -Infinity
+
+  const flush = () => {
+    const cols = colEnds.length
+    for (const ev of cluster) result.set(ev.id, { col: ev.col, cols })
+    cluster = []
+    colEnds = []
+    clusterMaxEnd = -Infinity
+  }
+
+  for (const ev of events) {
+    // A gap after everything in the current cluster closes it.
+    if (cluster.length > 0 && ev.start >= clusterMaxEnd) flush()
+    // Reuse the first column whose last event has already ended, else open one.
+    let col = colEnds.findIndex(end => end <= ev.start)
+    if (col === -1) { col = colEnds.length; colEnds.push(ev.end) }
+    else colEnds[col] = ev.end
+    cluster.push({ id: ev.a.id, col })
+    clusterMaxEnd = Math.max(clusterMaxEnd, ev.end)
+  }
+  flush()
+  return result
+}
+
 
 export function CalendarTab() {
   const { appointments, loading, updateAppointmentSchedule, cancelAppointment } = useAppointments()
@@ -232,6 +271,7 @@ export function CalendarTab() {
             {days.map(d => {
               const ds = getDateStr(d)
               const appts = byDate[ds] ?? []
+              const layout = layoutColumns(appts)
               return (
                 <div key={ds} className="relative border-l border-black/8">
                   {/* hour lines */}
@@ -244,12 +284,14 @@ export function CalendarTab() {
                     const [sh, sm] = apptTime(a).split(':').map(Number)
                     const top = ((sh - HOURS[0]) + sm / 60) * ROW_H
                     const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 22)
+                    const { col, cols } = layout.get(a.id) ?? { col: 0, cols: 1 }
+                    const wPct = 100 / cols
                     return (
                       <button
                         key={a.id}
                         onClick={(e) => { e.stopPropagation(); setSelected(a) }}
                         className={`absolute flex flex-col justify-center px-1.5 border-none cursor-pointer hover:brightness-95 rounded-md z-10 ${c.bg}`}
-                        style={{ top: top + 1, height, left: 2, right: 2 }}
+                        style={{ top: top + 1, height, left: `calc(${wPct * col}% + 2px)`, width: `calc(${wPct}% - 3px)` }}
                       >
                         <span className={`text-[11px] font-medium w-full overflow-hidden whitespace-nowrap ${c.text}`} style={{ textOverflow: "'.'" }}>{a.client_name}</span>
                         {height > 34 && <span className="text-[10px] text-[#6e6e73] truncate w-full">{apptTime(a)}</span>}
@@ -269,6 +311,7 @@ export function CalendarTab() {
   function renderDayView() {
     const ds = getDateStr(current)
     const appts = byDate[ds] ?? []
+    const layout = layoutColumns(appts)
     const totalH = HOURS.length * ROW_H
     return (
       <div className="overflow-y-auto max-h-[560px]">
@@ -296,12 +339,14 @@ export function CalendarTab() {
               const [sh, sm] = apptTime(a).split(':').map(Number)
               const top = ((sh - HOURS[0]) + sm / 60) * ROW_H
               const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 40)
+              const { col, cols } = layout.get(a.id) ?? { col: 0, cols: 1 }
+              const wPct = 100 / cols
               return (
                 <button
                   key={a.id}
                   onClick={() => setSelected(a)}
                   className={`absolute text-left rounded-xl px-3 border-none cursor-pointer hover:brightness-95 z-10 flex flex-col justify-center ${c.bg}`}
-                  style={{ top: top + 1, height, left: 4, right: 4 }}
+                  style={{ top: top + 1, height, left: `calc(${wPct * col}% + 4px)`, width: `calc(${wPct}% - 6px)` }}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className={`text-sm font-medium leading-tight ${c.text}`}>{a.client_name}</p>
