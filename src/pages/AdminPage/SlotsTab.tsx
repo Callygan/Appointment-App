@@ -261,7 +261,7 @@ export function SlotsTab() {
                 {slotsForAdminDate.map((slot, i) => (
                   <li key={slot.id} className={`flex items-center justify-between px-5 py-3 ${i !== slotsForAdminDate.length - 1 ? 'border-b border-white/30' : ''}`}>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-[#1d1d1f] tabular-nums">{slot.start_time.slice(0, 5)}</span>
+                      <span className="text-sm font-semibold text-[#1d1d1f] tabular-nums">{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</span>
                       {slot.is_booked ? <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f59e0b]/15 text-[#b45309]">Rezervat</span> : <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#1a6b2e]">Liber</span>}
                     </div>
                     {!slot.is_booked && (
