@@ -349,7 +349,7 @@ export function CalendarTab() {
                   key={a.id}
                   onClick={() => setSelected(a)}
                   className={`absolute text-left rounded-xl px-3 border-none cursor-pointer hover:brightness-95 flex flex-col justify-center ${c.bg}`}
-                  style={{ top: top + 1, height, left: (overlap ? col * 22 : 0) + 4, right: 4, zIndex: 10 + col, borderLeft: overlap ? `4px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
+                  style={{ top: top + 1, height, left: (overlap ? col * 13 : 0) + 4, right: 4, zIndex: 10 + col, borderLeft: overlap ? `4px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className={`text-sm font-medium leading-tight ${c.text}`}>{a.client_name}</p>
