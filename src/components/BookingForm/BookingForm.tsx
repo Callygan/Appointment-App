@@ -11,12 +11,13 @@ import type { AvailableSlot, Service } from '../../types'
 interface Props {
   slot: AvailableSlot
   services: Service[]
-  onSuccess: (bookingNumber: number, serviceName?: string, servicePrice?: number) => void
+  onSuccess: (bookingNumber: number, serviceName?: string, servicePrice?: number, extras?: { name: string; price?: number }[]) => void
   onCancel: () => void
 }
 
 export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
   const mainServices = services.filter((s) => s.service_type === 'main')
+  const extraServices = services.filter((s) => s.service_type === 'extra')
 
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState<string | null>(null)
@@ -26,8 +27,15 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
   const [serviceError, setServiceError] = useState(false)
   const [instagram, setInstagram] = useState('')
   const [serviceId, setServiceId] = useState('')
+  const [extraServiceIds, setExtraServiceIds] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function toggleExtra(id: string) {
+    setExtraServiceIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -88,8 +96,20 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
       return
     }
 
+    // Attach any selected extra services (additive; non-blocking for the booking).
+    if (extraServiceIds.length > 0) {
+      const { error: extrasError } = await supabase.rpc('add_appointment_extras', {
+        p_booking_number: bookingNumber as number,
+        p_extra_service_ids: extraServiceIds,
+      })
+      if (extrasError && import.meta.env.DEV) console.error('add_appointment_extras error:', extrasError)
+    }
+
     const selectedService = mainServices.find((s) => s.id === serviceId)
-    onSuccess(bookingNumber as number, selectedService?.name, selectedService?.price)
+    const selectedExtras = extraServices
+      .filter((s) => extraServiceIds.includes(s.id))
+      .map((s) => ({ name: s.name, price: s.price }))
+    onSuccess(bookingNumber as number, selectedService?.name, selectedService?.price, selectedExtras)
   }
 
   const [visible, setVisible] = useState(false)
@@ -210,6 +230,37 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
               />
               <span className={`text-xs text-red-500 pl-2 font-normal normal-case tracking-normal ${serviceError ? 'visible' : 'invisible'}`}>Te rugăm să selectezi un serviciu.</span>
             </label>
+          )}
+
+          {extraServices.length > 0 && (
+            <div className={labelCls}>
+              <span className="pl-2 pt-3">Servicii extra <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(opțional)</span></span>
+              <div className="flex flex-wrap justify-center gap-2 mt-1">
+                {extraServices.map((s) => {
+                  const checked = extraServiceIds.includes(s.id)
+                  return (
+                    <button
+                      type="button"
+                      key={s.id}
+                      onClick={() => toggleExtra(s.id)}
+                      aria-pressed={checked}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium normal-case tracking-normal transition-all cursor-pointer ${
+                        checked
+                          ? 'bg-[#34c759]/15 border-[#34c759]/50 text-[#1d7a34]'
+                          : 'bg-white/50 border-white/60 text-[#1d1d1f] hover:bg-white/70'
+                      }`}
+                    >
+                      {checked && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                      <span>{s.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           )}
 
           {error && (
