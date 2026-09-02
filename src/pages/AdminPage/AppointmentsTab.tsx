@@ -223,6 +223,7 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
     { label: 'Dată', key: 'date' },
     { label: 'Oră', key: 'time' },
     { label: 'Serviciu', key: 'service' },
+    { label: 'Extra' },
     { label: 'Telefon' },
     { label: 'Instagram' },
     { label: 'Nr.', key: 'booking_number' },
@@ -274,6 +275,19 @@ function AppointmentTable({ items, onRequestCancel, onEdit, onConfirm, showCance
                 {a.available_slots ? formatTime(a.available_slots.start_time) : a.appointment_time ? formatTime(a.appointment_time) : '—'}
               </td>
               <td className="px-4 py-3 text-[#1d1d1f]">{a.services?.name ?? <span className="text-[#6e6e73]/40">—</span>}</td>
+              <td className="px-4 py-3">
+                {a.appointment_extras && a.appointment_extras.length > 0 ? (
+                  <span className="inline-flex flex-wrap gap-1">
+                    {a.appointment_extras.map((e) => (
+                      <span key={e.service_id} className="inline-block rounded-full bg-[#34c759]/12 text-[#34c759] text-[11px] font-medium px-2 py-0.5 whitespace-nowrap">
+                        {e.services?.name ?? 'Extra'}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-[#6e6e73]/40">—</span>
+                )}
+              </td>
               <td className="px-4 py-3">
                 <a href={`tel:${a.client_phone}`} className="text-[#34c759] no-underline hover:underline">{a.client_phone}</a>
               </td>
@@ -373,13 +387,19 @@ function ExportButton({ items, label = 'trecute' }: { items: ReturnType<typeof u
       .sort((a, b) => effDate(a).localeCompare(effDate(b)))
       .map(a => {
         const date = effDate(a)
+        const extras = a.appointment_extras ?? []
+        const serviceCell = [a.services?.name ?? '', ...extras.map(e => e.services?.name ?? 'Extra')]
+          .filter(Boolean)
+          .join(' + ')
+        const extrasPrice = extras.reduce((sum, e) => sum + (e.services?.price ?? 0), 0)
+        const totalPrice = (a.services?.price ?? 0) + extrasPrice
         return [
           a.booking_number,
           date ? toRoDate(date) : '',
-          a.services?.name ?? '',
+          serviceCell,
           a.client_name,
           a.client_phone,
-          a.services?.price != null ? a.services.price : '',
+          a.services?.price != null || extras.length > 0 ? totalPrice : '',
         ]
       })
 
