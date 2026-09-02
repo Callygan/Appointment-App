@@ -61,6 +61,9 @@ function apptDurationMins(a: Appointment): number {
 // Gray palette for appointments that already happened
 const PAST_COLOR = { bg: 'bg-[#8e8e93]/15', text: 'text-[#6e6e73]', dot: 'bg-[#8e8e93]' }
 
+// Distinct left-border accents to tell overlapping appointments apart
+const OVERLAP_ACCENTS = ['#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6', '#14b8a6']
+
 // An appointment is "past" once its end time is before now
 function isPastAppt(a: Appointment, now: Date = new Date()): boolean {
   const ds = apptDate(a)
@@ -285,13 +288,13 @@ export function CalendarTab() {
                     const top = ((sh - HOURS[0]) + sm / 60) * ROW_H
                     const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 22)
                     const { col, cols } = layout.get(a.id) ?? { col: 0, cols: 1 }
-                    const wPct = 100 / cols
+                    const overlap = cols > 1
                     return (
                       <button
                         key={a.id}
                         onClick={(e) => { e.stopPropagation(); setSelected(a) }}
-                        className={`absolute flex flex-col justify-center px-1.5 border-none cursor-pointer hover:brightness-95 rounded-md z-10 ${c.bg}`}
-                        style={{ top: top + 1, height, left: `calc(${wPct * col}% + 2px)`, width: `calc(${wPct}% - 3px)` }}
+                        className={`absolute flex flex-col justify-center px-1.5 border-none cursor-pointer hover:brightness-95 rounded-md ${c.bg}`}
+                        style={{ top: top + 1, height, left: (overlap ? col * 13 : 0) + 2, right: 2, zIndex: 10 + col, borderLeft: overlap ? `3px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
                       >
                         <span className={`text-[11px] font-medium w-full overflow-hidden whitespace-nowrap ${c.text}`} style={{ textOverflow: "'.'" }}>{a.client_name}</span>
                         {height > 34 && <span className="text-[10px] text-[#6e6e73] truncate w-full">{apptTime(a)}</span>}
@@ -340,13 +343,13 @@ export function CalendarTab() {
               const top = ((sh - HOURS[0]) + sm / 60) * ROW_H
               const height = Math.max((apptDurationMins(a) / 60) * ROW_H - 2, 40)
               const { col, cols } = layout.get(a.id) ?? { col: 0, cols: 1 }
-              const wPct = 100 / cols
+              const overlap = cols > 1
               return (
                 <button
                   key={a.id}
                   onClick={() => setSelected(a)}
-                  className={`absolute text-left rounded-xl px-3 border-none cursor-pointer hover:brightness-95 z-10 flex flex-col justify-center ${c.bg}`}
-                  style={{ top: top + 1, height, left: `calc(${wPct * col}% + 4px)`, width: `calc(${wPct}% - 6px)` }}
+                  className={`absolute text-left rounded-xl px-3 border-none cursor-pointer hover:brightness-95 flex flex-col justify-center ${c.bg}`}
+                  style={{ top: top + 1, height, left: (overlap ? col * 22 : 0) + 4, right: 4, zIndex: 10 + col, borderLeft: overlap ? `4px solid ${OVERLAP_ACCENTS[col % OVERLAP_ACCENTS.length]}` : undefined }}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className={`text-sm font-medium leading-tight ${c.text}`}>{a.client_name}</p>
