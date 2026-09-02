@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, runAuthed } from '../lib/supabase'
+import type { PostgrestError } from '@supabase/supabase-js'
 import { getDateStr } from '../utils/dateUtils'
 
 export interface StatAppointment {
@@ -239,18 +240,19 @@ export function useStatistics(from: string, to: string) {
       setError(null)
     })
 
-    supabase
-      .from('appointments')
-      .select('id, status, appointment_date, appointment_time, client_name, client_phone, service_id, services(name, price), available_slots(date, start_time, end_time)')
-      .then(({ data: rows, error: err }) => {
-        if (err) {
-          setError(err.message)
-          setLoading(false)
-          return
-        }
-        setData(computeStats((rows ?? []) as unknown as StatAppointment[], from, to))
+    runAuthed<StatAppointment[]>(() =>
+      supabase
+        .from('appointments')
+        .select('id, status, appointment_date, appointment_time, client_name, client_phone, service_id, services(name, price), available_slots(date, start_time, end_time)') as unknown as PromiseLike<{ data: StatAppointment[] | null; error: PostgrestError | null }>,
+    ).then(({ data: rows, error: err }) => {
+      if (err) {
+        setError(err.message)
         setLoading(false)
-      })
+        return
+      }
+      setData(computeStats(rows ?? [], from, to))
+      setLoading(false)
+    })
   }, [from, to])
 
   return { data, loading, error }
