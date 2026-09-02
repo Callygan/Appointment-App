@@ -237,8 +237,8 @@ export function StatisticsTab() {
 
           {/* Charts row 1 */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <ChartCard title="Programări pe lună">
-              {data.byMonth.length === 0 ? (
+            <ChartCard title="Programări pe lună (evoluție)">
+              {data.byMonth.every(m => m.count === 0) ? (
                 <p className="text-xs text-[#6e6e73] text-center py-6">Nu există date în această perioadă</p>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
