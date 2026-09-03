@@ -65,7 +65,7 @@ export interface StatsData {
   returningClients: number
   topClients: { name: string; phone: string; count: number }[]
   avgDaysBetweenVisits: number | null
-  momGrowth: { bookings: number | null; revenue: number | null }
+  momGrowth: { bookings: number | null; revenue: number | null; realizedRevenue: number | null }
 }
 
 function computeStats(allRows: StatAppointment[], from: string, to: string): StatsData {
@@ -102,9 +102,19 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     return d >= prevFromStr && d <= prevToStr
   })
   const prevRevenue = prevActive.reduce((sum, r) => sum + apptRevenue(r), 0)
+
+  // Realized revenue for the previous period, capped at the equivalent moment
+  // (same calendar day shifted back one month) so we compare like-for-like MTD.
+  const nowDate = new Date()
+  const prevCutoffStr = toIsoDate(new Date(nowDate.getFullYear(), nowDate.getMonth() - 1, nowDate.getDate()))
+  const prevRealizedRevenue = prevActive
+    .filter(r => effectiveDate(r)! <= prevCutoffStr)
+    .reduce((sum, r) => sum + apptRevenue(r), 0)
+
   const momGrowth = {
     bookings: prevActive.length > 0 ? Math.round(((active.length - prevActive.length) / prevActive.length) * 100) : null,
     revenue: prevRevenue > 0 ? Math.round(((estimatedRevenue - prevRevenue) / prevRevenue) * 100) : null,
+    realizedRevenue: prevRealizedRevenue > 0 ? Math.round(((realizedRevenue - prevRealizedRevenue) / prevRealizedRevenue) * 100) : null,
   }
 
   // By month — always show a trailing window of months ending at the selected

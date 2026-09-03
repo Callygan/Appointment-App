@@ -209,6 +209,7 @@ export function StatisticsTab() {
               label="Venit realizat"
               value={`${data.realizedRevenue} RON`}
               sub="din programări finalizate"
+              growth={data.momGrowth.realizedRevenue}
             />
             <KpiCard
               label="Venit estimat"
