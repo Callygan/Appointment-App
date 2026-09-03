@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
+  ResponsiveContainer, LabelList,
 } from 'recharts'
 import { useStatistics } from '../../hooks/useStatistics'
 import { getDateStr } from '../../utils/dateUtils'
@@ -241,22 +241,45 @@ export function StatisticsTab() {
 
           {/* Charts row 1 */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <ChartCard title="Programări pe lună (evoluție)">
-              {data.byMonth.every(m => m.count === 0) ? (
+            <ChartCard title="Venit realizat pe lună (evoluție)">
+              {data.byMonth.every(m => m.realizedRevenue === 0) ? (
                 <p className="text-xs text-[#6e6e73] text-center py-6">Nu există date în această perioadă</p>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={data.byMonth} barSize={28} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+                  <BarChart data={data.byMonth} barSize={28} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6e6e73' }} axisLine={false} tickLine={false} interval={0} angle={-40} textAnchor="end" height={46} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(52,199,89,0.08)' }} formatter={(v) => [`${v} prog.`, 'Programări']} />
-                    <Bar dataKey="count" fill={CHART_COLOR} radius={[6, 6, 0, 0]} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(52,199,89,0.08)' }} formatter={(v) => [`${v} RON`, 'Venit realizat']} />
+                    <Bar dataKey="realizedRevenue" fill={CHART_COLOR} radius={[6, 6, 0, 0]}>
+                      <LabelList dataKey="realizedRevenue" position="top" fontSize={10} fill="#1d1d1f" formatter={(v) => (v ? v : '')} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
             </ChartCard>
 
+            <ChartCard title="Programări pe lună (evoluție)">
+              {data.byMonth.every(m => m.count === 0) ? (
+                <p className="text-xs text-[#6e6e73] text-center py-6">Nu există date în această perioadă</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={data.byMonth} barSize={28} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6e6e73' }} axisLine={false} tickLine={false} interval={0} angle={-40} textAnchor="end" height={46} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(52,199,89,0.08)' }} formatter={(v) => [`${v} prog.`, 'Programări']} />
+                    <Bar dataKey="count" fill={CHART_COLOR} radius={[6, 6, 0, 0]}>
+                      <LabelList dataKey="count" position="top" fontSize={10} fill="#1d1d1f" formatter={(v) => (v ? v : '')} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+          </div>
+
+          {/* Charts row 2 */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <ChartCard title="Servicii populare">
               {data.byService.length === 0 ? (
                 <p className="text-xs text-[#6e6e73] text-center py-6">Nu există date în această perioadă</p>
@@ -267,50 +290,53 @@ export function StatisticsTab() {
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: '#1d1d1f' }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(94,92,230,0.08)' }} formatter={(v) => [`${v} prog.`, 'Programări']} />
-                    <Bar dataKey="count" fill={CHART_COLOR2} radius={[0, 6, 6, 0]} />
+                    <Bar dataKey="count" fill={CHART_COLOR2} radius={[0, 6, 6, 0]}>
+                      <LabelList dataKey="count" position="right" fontSize={10} fill="#1d1d1f" />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
             </ChartCard>
-          </div>
 
-          {/* Charts row 2 */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <ChartCard title="Ore de vârf">
               {data.byHour.length === 0 ? (
                 <p className="text-xs text-[#6e6e73] text-center py-6">Nu există date în această perioadă</p>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={data.byHour} barSize={22} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+                  <BarChart data={data.byHour} barSize={22} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(52,199,89,0.08)' }} formatter={(v) => [`${v} prog.`, 'Programări']} />
-                    <Bar dataKey="count" fill={CHART_COLOR} radius={[5, 5, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </ChartCard>
-
-            <ChartCard title="Zile de săptămână">
-              {data.byDayOfWeek.every(d => d.count === 0) ? (
-                <p className="text-xs text-[#6e6e73] text-center py-6">Nu există date în această perioadă</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={data.byDayOfWeek} barSize={30} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(94,92,230,0.08)' }} formatter={(v) => [`${v} prog.`, 'Programări']} />
-                    <Bar dataKey="count" fill={CHART_COLOR2} radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="count" fill={CHART_COLOR} radius={[5, 5, 0, 0]}>
+                      <LabelList dataKey="count" position="top" fontSize={10} fill="#1d1d1f" formatter={(v) => (v ? v : '')} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
             </ChartCard>
           </div>
 
-          {/* Revenue by service + Top clients */}
+          {/* Charts row 3 */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <ChartCard title="Zile de săptămână">
+              {data.byDayOfWeek.every(d => d.count === 0) ? (
+                <p className="text-xs text-[#6e6e73] text-center py-6">Nu există date în această perioadă</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={data.byDayOfWeek} barSize={30} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(94,92,230,0.08)' }} formatter={(v) => [`${v} prog.`, 'Programări']} />
+                    <Bar dataKey="count" fill={CHART_COLOR2} radius={[6, 6, 0, 0]}>
+                      <LabelList dataKey="count" position="top" fontSize={10} fill="#1d1d1f" formatter={(v) => (v ? v : '')} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+
           {data.byService.length > 0 && (
             <ChartCard title="Venit estimat per serviciu">
               <div className="overflow-x-auto">
@@ -328,38 +354,6 @@ export function StatisticsTab() {
                         <td className="py-2 pr-4 text-[#1d1d1f] font-medium">{s.name}</td>
                         <td className="py-2 pr-4 text-center text-[#6e6e73]">{s.count}</td>
                         <td className="py-2 text-right text-[#1d1d1f] font-semibold">{s.revenue} RON</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </ChartCard>
-          )}
-
-          {/* Top clients */}
-          {data.topClients.length > 0 && (
-            <ChartCard title="Top clienți">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[300px]">
-                  <thead>
-                    <tr className="border-b border-black/[0.06]">
-                      <th className="text-left text-xs font-medium text-[#6e6e73] pb-2 pr-4">#</th>
-                      <th className="text-left text-xs font-medium text-[#6e6e73] pb-2 pr-4">Nume</th>
-                      <th className="text-left text-xs font-medium text-[#6e6e73] pb-2 pr-4">Telefon</th>
-                      <th className="text-center text-xs font-medium text-[#6e6e73] pb-2">Vizite</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.topClients.map((c, i) => (
-                      <tr key={c.phone} className="border-b border-black/[0.04] last:border-0">
-                        <td className="py-2 pr-4 text-[#6e6e73] text-xs">{i + 1}</td>
-                        <td className="py-2 pr-4 text-[#1d1d1f] font-medium">{c.name}</td>
-                        <td className="py-2 pr-4 text-[#6e6e73] text-xs">{c.phone}</td>
-                        <td className="py-2 text-center">
-                          <span className="text-xs font-semibold bg-[#34c759]/15 text-[#1a6b2e] px-2 py-0.5 rounded-full">
-                            {c.count}
-                          </span>
-                        </td>
                       </tr>
                     ))}
                   </tbody>

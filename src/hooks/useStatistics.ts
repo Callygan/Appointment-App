@@ -35,6 +35,21 @@ function effectiveTime(r: StatAppointment) {
   return r.appointment_time ?? r.available_slots?.start_time ?? null
 }
 
+/** True if the appointment has already happened (past date, or today with its end time passed) */
+function isPast(r: StatAppointment): boolean {
+  const d = effectiveDate(r)
+  if (!d) return false
+  const today = toIsoDate(new Date())
+  if (d < today) return true
+  if (d === today) {
+    const end = r.available_slots?.end_time ?? r.appointment_time ?? null
+    if (!end) return false
+    const [h, m] = end.split(':').map(Number)
+    return Date.now() >= new Date().setHours(h, m, 0, 0)
+  }
+  return false
+}
+
 export interface StatsData {
   totalBookings: number
   activeBookings: number
@@ -42,7 +57,7 @@ export interface StatsData {
   cancellationRate: number
   estimatedRevenue: number
   realizedRevenue: number
-  byMonth: { label: string; count: number; revenue: number }[]
+  byMonth: { label: string; count: number; revenue: number; realizedRevenue: number }[]
   byHour: { label: string; count: number }[]
   byDayOfWeek: { label: string; count: number }[]
   byService: { name: string; count: number; revenue: number }[]
@@ -70,20 +85,7 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
   const estimatedRevenue = active.reduce((sum, r) => sum + apptRevenue(r), 0)
 
   // Realized revenue = only confirmed appointments already in the past
-  const today = toIsoDate(new Date())
-  const nowMs = Date.now()
-  const realizedRevenue = active.filter(r => {
-    const d = effectiveDate(r)!
-    if (d < today) return true
-    if (d === today) {
-      const end = r.available_slots?.end_time ?? r.appointment_time ?? null
-      if (!end) return false
-      const [h, m] = end.split(':').map(Number)
-      const endMs = new Date().setHours(h, m, 0, 0)
-      return nowMs >= endMs
-    }
-    return false
-  }).reduce((sum, r) => sum + apptRevenue(r), 0)
+  const realizedRevenue = active.filter(isPast).reduce((sum, r) => sum + apptRevenue(r), 0)
 
   // Previous period (MTD vs prior MTD)
   // Align to day 1 of the previous month, same duration
@@ -109,23 +111,25 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
   // period, so a single-month selection still shows a trend (not one lone bar).
   // Independent of the period filter: uses all confirmed history, then keeps the
   // last N months up to `to` (min 6, up to 12 for longer ranges).
-  const monthMap = new Map<string, { count: number; revenue: number }>()
+  const monthMap = new Map<string, { count: number; revenue: number; realizedRevenue: number }>()
   for (const r of allConfirmed) {
     const d = effectiveDate(r)
     if (!d) continue
     const key = d.slice(0, 7) // 'YYYY-MM'
-    const prev = monthMap.get(key) ?? { count: 0, revenue: 0 }
-    monthMap.set(key, { count: prev.count + 1, revenue: prev.revenue + apptRevenue(r) })
+    const prev = monthMap.get(key) ?? { count: 0, revenue: 0, realizedRevenue: 0 }
+    monthMap.set(key, {
+      count: prev.count + 1,
+      revenue: prev.revenue + apptRevenue(r),
+      realizedRevenue: prev.realizedRevenue + (isPast(r) ? apptRevenue(r) : 0),
+    })
   }
-  const [fy, fm] = from.split('-').map(Number)
   const [ty, tm] = to.split('-').map(Number)
-  const spanMonths = (ty - fy) * 12 + (tm - fm) + 1
-  const trendMonths = Math.min(12, Math.max(6, spanMonths))
+  const trendMonths = 12
   const byMonth = Array.from({ length: trendMonths }, (_, i) => {
     const d = new Date(ty, (tm - 1) - (trendMonths - 1 - i), 1)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const v = monthMap.get(key) ?? { count: 0, revenue: 0 }
-    return { label: d.toLocaleString('ro-RO', { month: 'short', year: '2-digit' }), count: v.count, revenue: v.revenue }
+    const v = monthMap.get(key) ?? { count: 0, revenue: 0, realizedRevenue: 0 }
+    return { label: d.toLocaleString('ro-RO', { month: 'short', year: '2-digit' }), count: v.count, revenue: v.revenue, realizedRevenue: v.realizedRevenue }
   })
 
   // By hour
