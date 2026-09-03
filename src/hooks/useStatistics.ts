@@ -11,20 +11,21 @@ export interface StatAppointment {
   client_name: string
   client_phone: string
   service_id?: string
+  service_price?: number
   services?: { name: string; price?: number }
-  appointment_extras?: { service_id: string; services?: { name: string; price?: number } | null }[]
+  appointment_extras?: { service_id: string; price?: number; services?: { name: string; price?: number } | null }[]
   available_slots?: { date: string; start_time: string; end_time?: string } | null
 }
 
 const toIsoDate = getDateStr
 
-/** Sum of the extra services' prices attached to an appointment */
+/** Sum of the extra services' prices attached to an appointment (snapshot at booking) */
 function extrasTotal(r: StatAppointment) {
-  return (r.appointment_extras ?? []).reduce((sum, e) => sum + (e.services?.price ?? 0), 0)
+  return (r.appointment_extras ?? []).reduce((sum, e) => sum + (e.price ?? e.services?.price ?? 0), 0)
 }
-/** Total revenue for an appointment = main service + all extras */
+/** Total revenue for an appointment = main service + all extras (snapshot prices) */
 function apptRevenue(r: StatAppointment) {
-  return (r.services?.price ?? 0) + extrasTotal(r)
+  return (r.service_price ?? r.services?.price ?? 0) + extrasTotal(r)
 }
 
 /** Returns the effective date: the field saved on deletion or the active slot's date */
@@ -176,9 +177,9 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
     serviceMap.set(name, { count: prev.count + 1, revenue: prev.revenue + price })
   }
   for (const r of active) {
-    addService(r.services?.name ?? 'Necunoscut', r.services?.price ?? 0)
+    addService(r.services?.name ?? 'Necunoscut', r.service_price ?? r.services?.price ?? 0)
     for (const e of r.appointment_extras ?? []) {
-      addService(e.services?.name ?? 'Extra', e.services?.price ?? 0)
+      addService(e.services?.name ?? 'Extra', e.price ?? e.services?.price ?? 0)
     }
   }
   const byService = Array.from(serviceMap.entries())
@@ -270,7 +271,7 @@ export function useStatistics(from: string, to: string) {
     runAuthed<StatAppointment[]>(() =>
       supabase
         .from('appointments')
-        .select('id, status, appointment_date, appointment_time, client_name, client_phone, service_id, services!service_id(name, price), appointment_extras(service_id, services(name, price)), available_slots(date, start_time, end_time)') as unknown as PromiseLike<{ data: StatAppointment[] | null; error: PostgrestError | null }>,
+        .select('id, status, appointment_date, appointment_time, client_name, client_phone, service_id, service_price, services!service_id(name, price), appointment_extras(service_id, price, services(name, price)), available_slots(date, start_time, end_time)') as unknown as PromiseLike<{ data: StatAppointment[] | null; error: PostgrestError | null }>,
     ).then(({ data: rows, error: err }) => {
       if (err) {
         setError(err.message)

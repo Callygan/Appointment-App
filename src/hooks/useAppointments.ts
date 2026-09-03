@@ -20,7 +20,7 @@ export function useAppointments() {
           *,
           available_slots ( date, start_time, end_time ),
           services!service_id ( name, price, duration_minutes ),
-          appointment_extras ( service_id, services ( name, price ) )
+          appointment_extras ( service_id, price, services ( name, price ) )
         `)
         .order('created_at', { ascending: false }),
     )
