@@ -15,6 +15,10 @@ function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1)
 }
 
+function endOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+}
+
 function addMonths(d: Date, n: number) {
   return new Date(d.getFullYear(), d.getMonth() + n, 1)
 }
@@ -88,7 +92,7 @@ export function StatisticsTab() {
       return { from: customFrom, to: customTo }
     }
     if (quick === 'current') {
-      return { from: toIso(startOfMonth(today)), to: toIso(today) }
+      return { from: toIso(startOfMonth(today)), to: toIso(endOfMonth(today)) }
     }
     if (quick === 'last') {
       const start = startOfMonth(addMonths(today, -1))
