@@ -123,10 +123,8 @@ function computeStats(allRows: StatAppointment[], from: string, to: string): Sta
       realizedRevenue: prev.realizedRevenue + (isPast(r) ? apptRevenue(r) : 0),
     })
   }
-  const [fy, fm] = from.split('-').map(Number)
   const [ty, tm] = to.split('-').map(Number)
-  const spanMonths = (ty - fy) * 12 + (tm - fm) + 1
-  const trendMonths = Math.min(12, Math.max(6, spanMonths))
+  const trendMonths = 12
   const byMonth = Array.from({ length: trendMonths }, (_, i) => {
     const d = new Date(ty, (tm - 1) - (trendMonths - 1 - i), 1)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
