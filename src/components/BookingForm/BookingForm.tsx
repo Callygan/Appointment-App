@@ -234,7 +234,10 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
                 values={extraServiceIds}
                 onChange={setExtraServiceIds}
                 placeholder="— Selectează servicii extra —"
-                options={extraServices.map((s) => ({ value: s.id, label: s.name }))}
+                options={extraServices.map((s) => ({
+                  value: s.id,
+                  label: s.name + (s.price ? ` — ${s.price} RON` : ''),
+                }))}
                 className="w-full"
               />
             </label>
