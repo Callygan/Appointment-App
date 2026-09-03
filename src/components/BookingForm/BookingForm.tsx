@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Select } from '../Select/Select'
+import { MultiSelect } from '../MultiSelect/MultiSelect'
 import { CountryCodeSelect } from '../CountryCodeSelect/CountryCodeSelect'
 import { validateName, validatePhone, capitalizeWords, formatPhoneNumber, sanitizeName, sanitizeInstagram } from '../../utils/validation'
 import { inputCls, labelCls, inputBorderCls } from '../ui/formStyles'
@@ -30,12 +31,6 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
   const [extraServiceIds, setExtraServiceIds] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  function toggleExtra(id: string) {
-    setExtraServiceIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    )
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -148,7 +143,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
         </button>
 
         <h2 className="text-lg font-semibold text-[#1d1d1f] tracking-tight mb-1">Confirmă rezervarea</h2>
-        <p className="text-sm text-[#6e6e73] mb-6 leading-relaxed">
+        <p className="text-sm text-[#6e6e73] mb-4 leading-relaxed">
           {formatDate(slot.date, { weekday: 'long', day: 'numeric', month: 'long' })} · <strong className="text-[#1d1d1f] font-medium">{formatTime(slot.start_time)}</strong>
         </p>
 
@@ -216,7 +211,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
           {mainServices.length > 0 && (
             <label className={labelCls}>
-              <span className="flex items-center gap-1 pl-2 pt-5">Serviciu <span className="text-red-500 normal-case tracking-normal font-normal">*</span></span>
+              <span className="flex items-center gap-1 pl-2 pt-4">Serviciu <span className="text-red-500 normal-case tracking-normal font-normal">*</span></span>
               <Select
                 value={serviceId}
                 onChange={(v) => { setServiceId(v); setServiceError(false) }}
@@ -233,36 +228,23 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
           )}
 
           {extraServices.length > 0 && (
-            <div className={labelCls}>
-              <span className="pl-2 pt-3">Servicii extra <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(opțional)</span></span>
-              <div className="flex flex-wrap justify-center gap-2 mt-1">
-                {extraServices.map((s) => {
-                  const checked = extraServiceIds.includes(s.id)
-                  return (
-                    <button
-                      type="button"
-                      key={s.id}
-                      onClick={() => toggleExtra(s.id)}
-                      aria-pressed={checked}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium normal-case tracking-normal transition-all cursor-pointer ${
-                        checked
-                          ? 'bg-[#34c759]/15 border-[#34c759]/50 text-[#1d7a34]'
-                          : 'bg-white/50 border-white/60 text-[#1d1d1f] hover:bg-white/70'
-                      }`}
-                    >
-                      <span>{s.name}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            <label className={labelCls}>
+              <span className="flex items-center gap-1 pl-2 pt-0">Servicii extra <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(opțional)</span></span>
+              <MultiSelect
+                values={extraServiceIds}
+                onChange={setExtraServiceIds}
+                placeholder="— Selectează servicii extra —"
+                options={extraServices.map((s) => ({ value: s.id, label: s.name }))}
+                className="w-full"
+              />
+            </label>
           )}
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50/80 border border-red-200/50 rounded-2xl px-4 py-3 m-0">{error}</p>
           )}
 
-          <div className="flex gap-3 justify-center mt-2">
+          <div className="flex gap-3 justify-center mt-4">
             <button
               type="button"
               onClick={onCancel}
