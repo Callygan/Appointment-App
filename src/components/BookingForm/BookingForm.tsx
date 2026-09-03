@@ -229,7 +229,7 @@ export function BookingForm({ slot, services, onSuccess, onCancel }: Props) {
 
           {extraServices.length > 0 && (
             <label className={labelCls}>
-              <span className="flex items-center gap-1 pl-2 pt-1">Servicii extra <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(opțional)</span></span>
+              <span className="flex items-center gap-1 pl-2 pt-0">Servicii extra <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(opțional)</span></span>
               <MultiSelect
                 values={extraServiceIds}
                 onChange={setExtraServiceIds}
