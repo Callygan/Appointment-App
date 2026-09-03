@@ -203,7 +203,6 @@ export function StatisticsTab() {
             <KpiCard
               label="Programări"
               value={data.activeBookings}
-              sub={`din ${data.totalBookings} total`}
               growth={data.momGrowth.bookings}
             />
             <KpiCard
