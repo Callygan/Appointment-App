@@ -57,13 +57,17 @@ function TabIcon({ id }: { id: TabId }) {
 
 export function AdminPage() {
   const { signOut } = useAuth()
-  const [tab, setTab] = useState<TabId>('appointments')
+  const [tab, setTab] = useState<TabId>(() => {
+    const saved = sessionStorage.getItem('adminTab')
+    return saved && TAB_ORDER.includes(saved as TabId) ? (saved as TabId) : 'appointments'
+  })
   const [menuOpen, setMenuOpen] = useState(false)
 
   const tabIndex = TAB_ORDER.indexOf(tab)
 
   function selectTab(t: TabId) {
     setTab(t)
+    sessionStorage.setItem('adminTab', t)
     setMenuOpen(false)
     window.scrollTo(0, 0)
   }
