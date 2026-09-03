@@ -391,8 +391,8 @@ function ExportButton({ items, label = 'trecute' }: { items: ReturnType<typeof u
         const serviceCell = [a.services?.name ?? '', ...extras.map(e => e.services?.name ?? 'Extra')]
           .filter(Boolean)
           .join(' + ')
-        const extrasPrice = extras.reduce((sum, e) => sum + (e.services?.price ?? 0), 0)
-        const totalPrice = (a.services?.price ?? 0) + extrasPrice
+        const extrasPrice = extras.reduce((sum, e) => sum + (e.price ?? e.services?.price ?? 0), 0)
+        const totalPrice = (a.service_price ?? a.services?.price ?? 0) + extrasPrice
         return [
           a.booking_number,
           date ? toRoDate(date) : '',

@@ -25,6 +25,7 @@ export interface Appointment {
   client_phone: string
   client_instagram?: string
   service_id?: string
+  service_price?: number
   created_at: string
   status: 'pending' | 'confirmed' | 'cancelled'
   appointment_date?: string
@@ -32,5 +33,5 @@ export interface Appointment {
   // joined fields
   available_slots?: AvailableSlot
   services?: Pick<Service, 'name' | 'price' | 'duration_minutes'>
-  appointment_extras?: { service_id: string; services?: Pick<Service, 'name' | 'price'> }[]
+  appointment_extras?: { service_id: string; price?: number; services?: Pick<Service, 'name' | 'price'> }[]
 }
