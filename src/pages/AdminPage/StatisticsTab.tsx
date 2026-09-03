@@ -248,7 +248,7 @@ export function StatisticsTab() {
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={data.byMonth} barSize={28} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6e6e73' }} axisLine={false} tickLine={false} interval={0} angle={-40} textAnchor="end" height={46} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(52,199,89,0.08)' }} formatter={(v) => [`${v} RON`, 'Venit realizat']} />
                     <Bar dataKey="realizedRevenue" fill={CHART_COLOR} radius={[6, 6, 0, 0]}>
@@ -266,7 +266,7 @@ export function StatisticsTab() {
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={data.byMonth} barSize={28} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6e6e73' }} axisLine={false} tickLine={false} interval={0} angle={-40} textAnchor="end" height={46} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(52,199,89,0.08)' }} formatter={(v) => [`${v} prog.`, 'Programări']} />
                     <Bar dataKey="count" fill={CHART_COLOR} radius={[6, 6, 0, 0]}>
