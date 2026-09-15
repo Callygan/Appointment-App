@@ -28,10 +28,10 @@ Clients browse free slots and book in seconds — the owner manages everything f
 
 | | |
 |---|---|
-| 🗓️ **Book online** | Clients pick a free slot from a calendar and book instantly |
-| 🔐 **Admin dashboard** | Manage slots, appointments, services, calendar & stats |
-| 📊 **Insights** | Charts and Excel exports for appointments |
-| 🛡️ **GDPR-ready** | Auto-anonymize personal data older than 12 months |
+| **Book online** | Clients pick a free slot from a calendar and book instantly |
+| **Admin dashboard** | Manage slots, appointments, services, calendar & stats |
+| **Insights** | Charts and Excel exports for appointments |
+| **GDPR-ready** | Auto-anonymize personal data older than 12 months |
 
 ---
 
