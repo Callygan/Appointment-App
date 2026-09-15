@@ -35,7 +35,7 @@ Clients browse free slots and book in seconds — the owner manages everything f
 
 ---
 
-## 🧱 Tech stack
+## Tech stack
 
 <table>
 <tr><td><b>UI</b></td><td>React 19 · TypeScript</td></tr>
@@ -51,7 +51,7 @@ Clients browse free slots and book in seconds — the owner manages everything f
 
 ---
 
-## 🚀 Getting started
+## Getting started
 
 **Requirements:** Node.js 18+ · npm · a Supabase project
 
@@ -74,23 +74,23 @@ npm run build && npm run preview
 
 ---
 
-## 🔑 Environment variables
+## Environment variables
 
 All variables are inlined at build time by Vite and **must** be prefixed with `VITE_`.
 Copy [`.env.example`](.env.example) → `.env`.
 
 | Variable | Required | Description |
 |---|:---:|---|
-| `VITE_SUPABASE_URL` | ✅ | Supabase project URL (`https://xxxx.supabase.co`) |
-| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase public (anon) API key |
-| `VITE_ADMIN_EMAILS` | ✅ | Comma-separated emails allowed into the dashboard |
+| `VITE_SUPABASE_URL` | Supabase project URL (`https://xxxx.supabase.co`) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase public (anon) API key |
+| `VITE_ADMIN_EMAILS` | Comma-separated emails allowed into the dashboard |
 
 > [!WARNING]
 > Never commit your `.env` file. Only `.env.example` (without secrets) belongs in git.
 
 ---
 
-## 📜 Scripts
+## Scripts
 
 | Command | Description |
 |---|---|
@@ -132,7 +132,7 @@ Deployed on **Vercel** — every push triggers `npm run build`, and `dist/` is s
 
 ---
 
-## 🧭 Routes
+## Routes
 
 | Path | Page |
 |---|---|
@@ -148,7 +148,7 @@ Deployed on **Vercel** — every push triggers `npm run build`, and `dist/` is s
 
 ---
 
-## 📁 Project structure
+## Project structure
 
 ```
 public/          # static images and favicons (favicon.ico, apple-touch-icon.png, …)
@@ -165,7 +165,7 @@ index.html       # meta tags, favicons, Content-Security-Policy
 
 ---
 
-## 🎯 Features
+## Features
 
 <table>
 <tr>
@@ -193,7 +193,7 @@ index.html       # meta tags, favicons, Content-Security-Policy
 
 ---
 
-## 🛠️ Development conventions
+## Development conventions
 
 - **Tailwind v4** — `@theme` / `@utility` in `src/index.css` may cause false-positive linter warnings; ignore them.
 - **Excel export** (`xlsx`) is dynamically imported to keep the initial bundle small.
@@ -202,7 +202,7 @@ index.html       # meta tags, favicons, Content-Security-Policy
 
 ---
 
-## 🚑 Troubleshooting
+## Troubleshooting
 
 | Symptom | Likely cause / fix |
 |---|---|
@@ -213,7 +213,7 @@ index.html       # meta tags, favicons, Content-Security-Policy
 
 ---
 
-## 📄 License
+## License
 
 This project is **proprietary and confidential**. All rights reserved.
 See the [`LICENSE`](LICENSE) file for the full terms. No use, reproduction, or
