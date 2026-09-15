@@ -24,7 +24,7 @@ Clients browse free slots and book in seconds — the owner manages everything f
 
 ---
 
-## ✨ Overview
+## Overview
 
 | | |
 |---|---|
