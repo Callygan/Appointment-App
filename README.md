@@ -85,9 +85,6 @@ Copy [`.env.example`](.env.example) → `.env`.
 | `VITE_SUPABASE_ANON_KEY` | Supabase public (anon) API key |
 | `VITE_ADMIN_EMAILS` | Comma-separated emails allowed into the dashboard |
 
-> [!WARNING]
-> Never commit your `.env` file. Only `.env.example` (without secrets) belongs in git.
-
 ---
 
 ## Scripts
