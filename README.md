@@ -98,7 +98,7 @@ Copy [`.env.example`](.env.example) → `.env`.
 
 ---
 
-## 🗄️ Backend (Supabase)
+## Backend (Supabase)
 
 The client talks to Supabase directly using the anon key.
 
